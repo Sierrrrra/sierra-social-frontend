@@ -1,0 +1,21 @@
+{
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "files.autoSave": "onFocusChange",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact"
+    ],
+    "prettier.singleQuote": true,
+    "prettier.trailingComma": "all",
+    "prettier.arrowParens": "avoid",
+    "prettier.endOfLine": "auto",
+    "react-native-tools": {
+      "projectRoot": "./"
+    }
+  }
+  
