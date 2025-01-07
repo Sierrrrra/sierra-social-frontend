@@ -219,7 +219,6 @@ export default function TabTwoScreen() {
                     setEventLocation(details?.formatted_address || data.description);
                   }}
                   query={{
-                    key: 'AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk-n8pI3Q',
                     language: 'en',
                   }}
                   styles={{
