@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "sierra",
+    "slug": "sierra",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "sierra",
+    "owner": "kollie",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.kollie.sierra"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "expoClientId": "759466498348-mdlj71cgp891obv9eehnlk31b2d9mcrh.apps.googleusercontent.com",
+      "iosClientId": "759466498348-rvl46a753qlqrfvmdliecj4596recupj.apps.googleusercontent.com",
+      "androidClientId": "759466498348-om5pe5p67vps7u49me7ec8bnqi1jfcea.apps.googleusercontent.com",
+      "webClientId": "759466498348-mdlj71cgp891obv9eehnlk31b2d9mcrh.apps.googleusercontent.com",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "956aa4e7-0594-447c-a794-8bc46da947f1"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/956aa4e7-0594-447c-a794-8bc46da947f1"
+    }
+  }
+}
