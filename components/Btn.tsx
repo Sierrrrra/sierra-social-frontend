@@ -1,14 +1,14 @@
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
-export default function Btn({ title, onPress, width = "100%", }) {
-    const theme = useColorScheme() ?? 'light';
+export default function Btn({ title, onPress, width = "100%" }) {
+  const theme = useColorScheme() ?? "light";
   return (
-    <TouchableOpacity style={[styles.button, { width, backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]} onPress={onPress}>
+    <TouchableOpacity style={[styles.button, { width }]} onPress={onPress}>
       <ThemedText style={styles.buttonText}>{title}</ThemedText>
     </TouchableOpacity>
   );
@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
   button: {
     // width: "100%",
     height: 50,
-    // backgroundColor: '#0c2a3f',
+    backgroundColor: "#0c2a3f",
     padding: 10,
     // margin: 10,
     borderRadius: 50,
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buttonText: {
-    // color: Colors.light.icon,
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },

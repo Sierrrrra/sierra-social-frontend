@@ -109,6 +109,11 @@ export default function Interests() {
           style={[
             styles.nextButton,
             { backgroundColor: isButtonActive ? Colors.dark.icon : Colors.light.icon },
+             
+            {
+              backgroundColor: selectedInterests.length != 0 ? '#0c2a3f' : '#0c2a3f'
+  
+            },
           ]}
           onPress={handleNext}
         >
@@ -169,7 +174,7 @@ const styles = StyleSheet.create({
   },
   interestText: {
     fontSize: 16,
-    color: "#333",
+    color: "#fff",
   },
   selectedText: {
     color: "#fff",
@@ -178,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
+    marginTop: Platform.OS === "ios" ? 20 : 20,
     marginBottom: 100,
   },
   headerText: {
@@ -197,5 +202,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "90%",
+    // backgroundColor: '#0c2a3f'
   },
 });
