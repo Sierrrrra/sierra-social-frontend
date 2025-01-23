@@ -15,16 +15,16 @@ export default function MyInput({
   multiline,
   Ionicons,
 }) {
-    const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? 'light';
   return (
-    <ThemedView style={[styles.inputRow, { width, height }, {borderBottomColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}>
+    <ThemedView style={[styles.inputRow, { width, height }, { borderBottomColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]}>
       {/* Render the icon if passed */}
       {Ionicons && <ThemedView style={styles.iconContainer}>{Ionicons}</ThemedView>}
 
       <TextInput
         placeholder={label}
         placeholderTextColor={theme === 'light' ? Colors.light.icon : Colors.dark.icon}
-        style={[styles.textInput, {color: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}
+        style={[styles.textInput, { color: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]}
         value={value}
         multiline={multiline}
         onChangeText={onChangeText}
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    // borderBottomColor: Colors.primary,
+    // borderBottomColor: "#e0e0e0",
     marginBottom: 15,
     paddingBottom: 5,
   },

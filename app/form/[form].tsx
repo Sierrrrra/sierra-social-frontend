@@ -20,6 +20,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import GooglePlacesInput from '@/components/GooglePlacesInput';
 
 const usersSampleData = [
   { id: '1', name: 'John Doe' },
@@ -42,31 +43,39 @@ export default function TabTwoScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupVisibility, setGroupVisibility] = useState('Private');
 
-
   const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  // const [endDate, setEndDate] = useState(new Date());
+  // const [eventLocation, setEventLocation] = useState('');
+
   const [eventTime, setEventTime] = useState(new Date());
   const [isFreeEvent, setIsFreeEvent] = useState(true);
   const [eventCost, setEventCost] = useState(0);
   const [eventTitle, setEventTitle] = useState("");
   const [eventSummary, setEventSummary] = useState("");
-  const [eventLocation, setEventLocation] = useState('');
   const [groupLocation, setGroupLocation] = useState('');
-
-  console.log(eventLocation)
-
   const [location, setLocation] = useState("");
   const [latLng, setLatLng] = useState({});
 
-  const handleLocationSelect = (locationData) => {
-    console.log("Location:", locationData)
+  console.log(location)
 
-    setLocation(locationData.description);
-    setLatLng({ lat: locationData.lat, lng: locationData.lng });
-  };
+
+  // const handleLocationSelect = (locationData) => {
+  //   console.log("Location:", locationData)
+
+  //   setLocation(locationData.description);
+  //   setLatLng({ lat: locationData.lat, lng: locationData.lng });
+  // };
+
 
   const handleCreateEvent = () => {
-    console.log("Event created!");
+    console.log("Event created!",
+      eventTitle,
+      location,
+      startDate,
+      eventTime,
+      eventSummary,
+      location,
+    );
   };
 
   const navigation = useNavigation();
@@ -74,8 +83,8 @@ export default function TabTwoScreen() {
   const router = useRouter()
 
   const { event } = useGlobalSearchParams();
-    // const { event } = route.params;
-    console.log(event)
+  // const { event } = route.params;
+  console.log(event)
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -94,12 +103,10 @@ export default function TabTwoScreen() {
   };
 
   const filteredUsers = searchQuery
-  ? usersSampleData.filter((user) =>
+    ? usersSampleData.filter((user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
-  : usersSampleData.slice(0, 5); // Show only the first 5 users initially
-
-
+    : usersSampleData.slice(0, 5); // Show only the first 5 users initially
 
 
   return (
@@ -113,10 +120,10 @@ export default function TabTwoScreen() {
       }
       headerTitle="Meet New People"
       headerTitleFontSize={30}
-      >
+    >
       <ThemedView style={styles.headerContainer}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Entypo name="chevron-small-left" size={50} color={theme === 'light' ? Colors.light.icon : Colors.dark.icon} />
+          <Entypo name="chevron-small-left" size={50} color={theme === 'light' ? Colors.light.icon : Colors.dark.icon} />
         </TouchableOpacity>
         <ThemedText type='title' style={styles.headerText}>{event}</ThemedText>
       </ThemedView>
@@ -129,136 +136,26 @@ export default function TabTwoScreen() {
 
         <ThemedView style={{ paddingTop: 15 }}>
           <ThemedText style={styles.label}>Event Title</ThemedText>
-          <Input 
-            label="Enter event title" 
+          <Input
+            label="Enter event title"
             value={eventTitle}
             onChangeText={setEventTitle}
           />
 
           <ThemedText style={styles.label}>Location</ThemedText>
-          {/* <GooglePlacesAutocomplete
+          <GooglePlacesInput
             placeholder="Event Location"
-            fetchDetails={true} // Ensures detailed information is fetched
-            onPress={(data, details = null) => {
-              // Update state with the selected location
-              setEventLocation(details?.formatted_address || data.description);
-            }}
-            query={{
-              key: 'AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk',
-              language: 'en',
-            }}
-            styles={{
-              textInputContainer: {
-                width: '100%',
-              },
-              textInput: {
-                height: 45,
-                borderBottomWidth: 1,
-                borderBottomColor: '#e0e0e0',
-                marginBottom: 15,
-                paddingBottom: 5,
-                fontSize: 17,
-              },
-              predefinedPlacesDescription: {
-                color: '#1faadb',
-              },
-              row: {
-                backgroundColor: '#fff',
-                padding: 13,
-                height: 44,
-                flexDirection: 'row',
-              },
-            }}
-            textInputProps={{
-              value: eventLocation, // Bind the state to the input value
-              onChangeText: setEventLocation, // Update state when user types manually
-            }}
-          /> */}
-
-        {/* <GooglePlacesAutocomplete
-          disableScroll={true}
-          placeholder="Enter location"
-          onPress={(data, details = null) => {
-            console.log('Selected Place:', data, details);
-            // Extract and set the selected location
-            setGroupLocation(data.description); // Assuming you have a state for the location
-          }}
-          query={{
-            key: 'AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk',
-            language: 'en', // Language for the suggestions
-          }}
-          textInputProps={{
-            value: groupLocation, // Bind the input to the state
-            onChangeText: (text) => setGroupLocation(text), // Handle manual input
-          }}
-          styles={{
-            textInput: {
-              height: 40,
-              borderColor: '#ccc',
-              borderWidth: 1,
-              borderRadius: 5,
-              paddingHorizontal: 10,
-              marginBottom: 15,
-              backgroundColor:'none',
-               color: 'white'
-            },
-          }}
-          fetchDetails={true} // Ensure place details are fetched if needed
-        /> */}
-
-
-
-
-          <GooglePlacesAutocomplete
-                  placeholder="Event Location"
-                  disableScroll={true}
-                  fetchDetails={true}
-                  onPress={(data, details = null) => {
-                    console.log(data, details)
-                    // Update state with the selected location
-                    setEventLocation(details?.formatted_address || data.description);
-                  }}
-                  query={{
-                    language: 'en',
-                  }}
-                  styles={{
-                    container: { flex: 1, zIndex: 1 },
-                    textInputContainer: {
-                      width: '100%',
-                  },
-                  textInput: {
-                      height: 45,
-                      // padding: 10,
-                      borderBottomWidth: 1,
-                      borderBottomColor: '#e0e0e0',
-                      marginBottom: 15,
-                      paddingBottom: 5,
-                      fontSize: 17,
-                      backgroundColor:'none',
-                      color: 'white'
-                  },
-                  predefinedPlacesDescription: {
-                      color: '#1faadb',
-                  },
-                  row: {
-                      backgroundColor: '#fff',
-                      padding: 13,
-                      height: 44,
-                      flexDirection: 'row',
-                    },
-                    listView: { zIndex: 2 },
-                  }}
-                  textInputProps={{
-                    value: eventLocation, // Bind the state to the input value
-                    onChangeText: (text) => setEventLocation(text), // Update state when user types manually
-                  }}
-                />
+            onPlaceSelected={(location) => setLocation(location)}
+          // stylesOverride={{
+          //   textInput: { color: "black" },
+          // }}
+          />
 
           <ThemedText style={styles.label}>Summary</ThemedText>
-          <Input 
-            label={"Brief summary of the event"} 
-            multiline={true} 
-            height={70} 
+          <Input
+            label={"Brief summary of the event"}
+            multiline={true}
+            height={70}
             value={eventSummary}
             onChangeText={setEventSummary}
           />
@@ -295,9 +192,9 @@ export default function TabTwoScreen() {
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           style={[styles.createGroupButton,
-            {
-              backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
-            },
+          {
+            backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
+          },
           ]}
         >
           <ThemedText style={styles.createGroupButtonText}>Create New Group</ThemedText>
@@ -321,40 +218,40 @@ export default function TabTwoScreen() {
               onChangeText={setGroupDescription}
             />
 
-          <ThemedText style={styles.modalLabel}>Group Type</ThemedText>
-          <ThemedView style={styles.visibilityContainer}>
-            <TouchableOpacity
-              style={[
-                styles.visibilityOption,
-                groupVisibility === 'Private' && {
-                  backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
-                  borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon
-                },
-              ]}
-              onPress={() => setGroupVisibility('Private')}
-            >
-              <ThemedText style={styles.optionText}>Private</ThemedText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.visibilityOption,
-                groupVisibility === 'Public' && {
-                  backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
-                  borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon
-                },
-              ]}
-              onPress={() => setGroupVisibility('Public')}
-            >
-              <ThemedText style={styles.optionText}>Public</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
+            <ThemedText style={styles.modalLabel}>Group Type</ThemedText>
+            <ThemedView style={styles.visibilityContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.visibilityOption,
+                  groupVisibility === 'Private' && {
+                    backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
+                    borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon
+                  },
+                ]}
+                onPress={() => setGroupVisibility('Private')}
+              >
+                <ThemedText style={styles.optionText}>Private</ThemedText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.visibilityOption,
+                  groupVisibility === 'Public' && {
+                    backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
+                    borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon
+                  },
+                ]}
+                onPress={() => setGroupVisibility('Public')}
+              >
+                <ThemedText style={styles.optionText}>Public</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
 
 
             <Input
               label="Search and add people to your group"
               value={searchQuery}
               onChangeText={setSearchQuery}
-              // placeholder="Search users"
+            // placeholder="Search users"
             />
 
             <FlatList
@@ -387,7 +284,7 @@ export default function TabTwoScreen() {
 
             <ThemedView style={styles.selectedUsersContainer}>
               {selectedUsers.map((user) => (
-                <ThemedView key={user.id} style={[styles.selectedUserChip, {backgroundColor: theme === 'light' ? '#fff' : '#333'}]}>
+                <ThemedView key={user.id} style={[styles.selectedUserChip, { backgroundColor: theme === 'light' ? '#fff' : '#333' }]}>
                   <ThemedText>{user.name}</ThemedText>
                   <TouchableOpacity onPress={() => handleUserRemove(user.id)}>
                     <ThemedText style={styles.removeUser}>✕</ThemedText>
@@ -399,7 +296,7 @@ export default function TabTwoScreen() {
             <ThemedView style={styles.modalActions}>
               <Btn width='40%' title="Cancel" onPress={() => setModalVisible(false)} />
               <Btn
-              width='40%'
+                width='40%'
                 title="Create Group"
                 onPress={() => {
                   console.log('Group Created:', {
@@ -421,12 +318,9 @@ export default function TabTwoScreen() {
         </ThemedView>
       </Modal>
 
-
-
-      
       <ThemedView style={[styles.row, { justifyContent: "center" }]}>
-          <Btn title={"Create Event"} width="100%" />
-        </ThemedView>
+        <Btn title={"Create Event"} width="100%" onPress={handleCreateEvent} />
+      </ThemedView>
     </ParallaxScrollView>
   );
 }

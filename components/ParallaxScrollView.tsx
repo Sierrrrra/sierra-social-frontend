@@ -54,6 +54,7 @@ export default function ParallaxScrollView({
       <Animated.ScrollView
         ref={scrollRef}
         scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: 0 }}>
         <Animated.View
           style={[
@@ -92,9 +93,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 32,
+    padding: 15,
     paddingTop: 10,
     gap: 16,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
 });
