@@ -25,10 +25,10 @@ export default function Email() {
   const handleNext = () => {
     if (isButtonActive) return;
 
-    dispatch(updateSignupData({ 
-      email: email 
+    dispatch(updateSignupData({
+      email: email
     }));
-    
+
     router.push('/signup/password');
   };
 
@@ -37,7 +37,7 @@ export default function Email() {
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>

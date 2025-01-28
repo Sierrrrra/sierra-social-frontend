@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, Alert } from 'react-native';
 import { Stack, Link, useRouter } from 'expo-router';
 import { Entypo, FontAwesome } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
@@ -39,8 +39,8 @@ export default function Password() {
   const handleNext = () => {
     if (!validatePassword()) return;
 
-    dispatch(updateSignupData({ 
-      password: password 
+    dispatch(updateSignupData({
+      password: password
     }));
 
     router.push('/signup/interests');
@@ -51,7 +51,7 @@ export default function Password() {
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>

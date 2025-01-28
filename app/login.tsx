@@ -45,13 +45,13 @@ export default function Login() {
   const navigation = useNavigation();
 
   const redirectUri =
-  Platform.OS === 'web'
-    ? window.location.origin
-    : `https://auth.expo.io/@${owner}/${slug}`;
+    Platform.OS === 'web'
+      ? window.location.origin
+      : `https://auth.expo.io/@${owner}/${slug}`;
 
-console.log('Redirect URI:', redirectUri);
+  console.log('Redirect URI:', redirectUri);
 
-console.log(slug, owner)
+  console.log(slug, owner)
 
 
   const [request, response, promptAsync] = Google.useAuthRequest({
@@ -136,7 +136,7 @@ console.log(slug, owner)
       <ThemedView style={styles.container}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.innerContainer}
           >
             <View style={styles.formContainer}>
@@ -147,7 +147,7 @@ console.log(slug, owner)
                 onChangeText={(val) => setCredentials({ ...credentials, email: val })}
                 keyboardType="email-address"
               />
-              
+
               <LoginInput
                 iconName="lock"
                 placeholder="Password"
@@ -176,7 +176,7 @@ console.log(slug, owner)
               {error && <ThemedText style={styles.error}>{error}</ThemedText>}
 
               <TouchableOpacity onPress={handleLogin} style={styles.primaryBtn}>
-                <ThemedText type="button" style={[styles.primaryBtnText, {color: 'white'}]}>
+                <ThemedText type="button" style={[styles.primaryBtnText, { color: 'white' }]}>
                   Sign In
                 </ThemedText>
               </TouchableOpacity>
@@ -198,7 +198,7 @@ console.log(slug, owner)
                     />
                   }
                   label="Google"
-                  style={[styles.googleButton, {borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}
+                  style={[styles.googleButton, { borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]}
                   onPress={handleGoogleLogin}
                 />
                 <SocialButton
@@ -211,17 +211,17 @@ console.log(slug, owner)
                     />
                   }
                   label="Facebook"
-                  style={[styles.facebookButton, {borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}
+                  style={[styles.facebookButton, { borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]}
                   onPress={handleFacebookLogin}
                 />
               </View>
 
               <View style={styles.signupContainer}>
                 <ThemedText style={styles.signupText}>
-                  Signup with email 
+                  Sign up with email
                 </ThemedText >
                 <Link href="/signup" style={styles.signupLink}>
-                    <ThemedText >Here</ThemedText>
+                  <ThemedText >here</ThemedText>
                 </Link>
               </View>
             </View>
@@ -315,8 +315,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  error: { 
-    color: 'red', 
-    marginBottom: 10 
+  error: {
+    color: 'red',
+    marginBottom: 10
   },
 });

@@ -39,16 +39,16 @@ export default function Home() {
   // Filter events based on category or search text
   const filteredEvents = isSearchActive
     ? events.filter(
-        (event) =>
-          event.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          event.summary.toLowerCase().includes(searchText.toLowerCase()) ||
-          event.location.toLowerCase().includes(searchText.toLowerCase()) ||
-          event.category.toLowerCase().includes(searchText.toLowerCase()) ||
-          event.creator.toLowerCase().includes(searchText.toLowerCase())
-      )
+      (event) =>
+        event.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.summary.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.location.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.category.toLowerCase().includes(searchText.toLowerCase()) ||
+        event.creator.toLowerCase().includes(searchText.toLowerCase())
+    )
     : selectedCategory === "All Events"
-    ? events
-    : events.filter((event) => event.category === selectedCategory);
+      ? events
+      : events.filter((event) => event.category === selectedCategory);
 
   const handleCategory = (category) => setSelectedCategory(category);
 
@@ -161,7 +161,7 @@ export default function Home() {
                       style={[
                         styles.categoryText,
                         selectedCategory === category &&
-                          styles.activeCategoryText,
+                        styles.activeCategoryText,
                       ]}
                     >
                       {category}
@@ -202,7 +202,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    paddingBottom: 100,
+    // paddingBottom: 100,
   },
   scrollViewContainer: {
     gap: 10,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     backgroundColor: "#333",
-    paddingVertical: 6,
+    paddingVertical: 10,
     paddingHorizontal: 13,
     borderRadius: 20,
     marginHorizontal: 4,
@@ -244,12 +244,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     borderRadius: 20,
     paddingHorizontal: 10,
+    // paddingVertical: 10,
     overflow: "hidden",
   },
   searchBox: {
     flex: 1,
-    height: 30,
-    fontSize: 14,
+    // height: 30,
+    fontSize: 15,
     color: "#333",
   },
   closeIcon: {

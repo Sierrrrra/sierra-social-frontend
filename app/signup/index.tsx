@@ -24,9 +24,9 @@ export default function Signup() {
 
   const handleNext = () => {
     if (isButtonActive) return;
-    dispatch(updateSignupData({ 
+    dispatch(updateSignupData({
       firstName: firstName,
-      lastName: lastName 
+      lastName: lastName
     }));
 
     // dispatch(updateOnboardingData({ fullName: `${firstName} ${lastName}` }));
@@ -39,7 +39,7 @@ export default function Signup() {
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>

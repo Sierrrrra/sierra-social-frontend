@@ -17,7 +17,7 @@ export default function MyInput({
 }) {
   const theme = useColorScheme() ?? 'light';
   return (
-    <ThemedView style={[styles.inputRow, { width, height }, { borderBottomColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon }]}>
+    <ThemedView style={[styles.inputRow, { width, height }, { borderBottomColor: theme === 'light' ? Colors.light.gray : Colors.dark.gray }]}>
       {/* Render the icon if passed */}
       {Ionicons && <ThemedView style={styles.iconContainer}>{Ionicons}</ThemedView>}
 

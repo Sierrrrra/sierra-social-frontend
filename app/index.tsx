@@ -77,16 +77,17 @@ const styles = StyleSheet.create({
   },
   footerText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 20,
     paddingHorizontal: 16,
     marginBottom: 16,
     backgroundColor: 'none'
   },
   link: {
-    // color: '#00f',
+    color: '#ECEDEE',
     textDecorationLine: 'underline',
+    fontSize: 13,
   },
   container: {
     flex: 1,
