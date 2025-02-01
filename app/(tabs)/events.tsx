@@ -74,14 +74,14 @@ export default function TabTwoScreen() {
       <ThemedView
         style={[
           styles.container,
-          { backgroundColor: theme === "light" ? "#fff" : "#333" },
+          { backgroundColor: theme === "light" ? "#333" : "#333" },
         ]}
       >
         {/* Tabs Below Header Image */}
         <View
           style={[
             styles.tabsContainer,
-            { backgroundColor: theme === "light" ? "#fff" : "#333" },
+            { backgroundColor: theme === "light" ? "#333" : "#333" },
           ]}
         >
           <TouchableOpacity

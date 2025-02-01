@@ -6,7 +6,7 @@ const events = [
     category: "Tech & Innovation",
     summary:
       "A thrilling 24-hour coding competition designed for students to collaborate and innovate.",
-    date: "November 12, 2025",
+    date: "February 12, 2025",
     time: "9:00 AM",
     creator: "Alice Johnson",
     details:
@@ -19,7 +19,7 @@ const events = [
     category: "Career",
     summary:
       "An essential event where students can connect with recruiters from top companies seeking fresh talent.",
-    date: "October 25, 2025",
+    date: "February 25, 2025",
     time: "10:00 AM",
     creator: "Michael Smith",
     details:
@@ -32,7 +32,7 @@ const events = [
     category: "Career",
     summary:
       "An informative workshop aimed at equipping students with strategies to manage stress effectively.",
-    date: "November 5, 2025",
+    date: "March 5, 2025",
     time: "3:00 PM",
     creator: "Sophia Lee",
     details:
@@ -45,7 +45,7 @@ const events = [
     category: "Tech & Innovation",
     summary:
       "A thought-provoking documentary screening followed by a panel discussion on climate change.",
-    date: "October 28, 2025",
+    date: "March 28, 2025",
     time: "6:00 PM",
     creator: "David Chen",
     details:
@@ -58,7 +58,7 @@ const events = [
     category: "Wellness",
     summary:
       "An exciting evening of performances showcasing the diverse talents of our student body.",
-    date: "November 10, 2025",
+    date: "April 10, 2025",
     time: "7:00 PM",
     creator: "Emily Davis",
     details:
@@ -71,7 +71,7 @@ const events = [
     category: "Entertainment",
     summary:
       "A comprehensive workshop for aspiring entrepreneurs to develop their business ideas.",
-    date: "November 18, 2025",
+    date: "April 18, 2025",
     time: "8:00 AM",
     creator: "Daniel Martinez",
     details:
@@ -84,7 +84,7 @@ const events = [
     category: "Entertainment",
     summary:
       "A vibrant festival celebrating global cuisine and cultural diversity among students.",
-    date: "October 30, 2025",
+    date: "May 30, 2025",
     time: "12:00 PM",
     creator: "Aisha Khan",
     details:
@@ -97,7 +97,7 @@ const events = [
     category: "Entertainment",
     summary:
       "A meaningful day dedicated to helping animals in need at a local shelter.",
-    date: "November 4, 2025",
+    date: "May 4, 2025",
     time: "8:00 AM",
     creator: "Liam Brown",
     details:
@@ -110,7 +110,7 @@ const events = [
     category: "Wellness",
     summary:
       "An exhilarating live music festival featuring performances from student bands and local artists.",
-    date: "November 15, 2025",
+    date: "June 15, 2025",
     time: "4:00 PM",
     creator: "Olivia Wilson",
     details:
@@ -123,7 +123,7 @@ const events = [
     category: "Career",
     summary:
       "An organized study session designed to help students prepare effectively for finals.",
-    date: "December 1, 2025",
+    date: "June 1, 2025",
     time: "6:00 PM",
     creator: "James Taylor",
     details:

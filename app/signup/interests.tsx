@@ -4,37 +4,45 @@ import { useRouter } from "expo-router";
 import { useDispatch, useSelector } from "react-redux";
 import { Entypo, FontAwesome } from "@expo/vector-icons";
 
-import ProgressBar from '@/components/ProgressBar';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
-import { updateSignupData } from '@/redux/signupSlice';
+import ProgressBar from "@/components/ProgressBar";
+import { ThemedView } from "@/components/ThemedView";
+import { ThemedText } from "@/components/ThemedText";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+import { updateSignupData } from "@/redux/signupSlice";
 
 const interestsValues = [
+  "Food & Drinks",
   "Music",
   "Bars",
   "Nightlife",
-  "Fitness & Wellness",
   "Travel & Adventure",
   "Entertainment",
+  "Weekend Trips",
+  "Education",
+  "Fitness & Wellness",
   "Arts & Culture",
   "Dating",
+  "Business & Networking",
+  "Technology & Innovation",
+  "Crafting",
+  "Tech-Free Connections",
 ];
 
 export default function Interests() {
-
-  const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? "light";
   const router = useRouter();
   const dispatch = useDispatch();
-//   const onboardingData = useSelector((state) => state.onboarding);
+  //   const onboardingData = useSelector((state) => state.onboarding);
 
   const [selectedInterests, setSelectedInterests] = useState([]);
   const isButtonActive = selectedInterests.length === 0;
 
   const toggleSelection = (interestsValues) => {
     if (selectedInterests.includes(interestsValues)) {
-      setSelectedInterests(selectedInterests.filter((item) => item !== interestsValues));
+      setSelectedInterests(
+        selectedInterests.filter((item) => item !== interestsValues)
+      );
     } else {
       setSelectedInterests([...selectedInterests, interestsValues]);
     }
@@ -43,10 +51,11 @@ export default function Interests() {
   const handleNext = () => {
     if (isButtonActive) return;
 
-    dispatch(updateSignupData({ 
-      interests: selectedInterests 
-    }));
-
+    dispatch(
+      updateSignupData({
+        interests: selectedInterests,
+      })
+    );
 
     router.push("/signup/permission");
   };
@@ -58,18 +67,17 @@ export default function Interests() {
       <TouchableOpacity
         style={[
           styles.interestButton,
-          isSelected && styles.selectedButton || {borderColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon,
-            backgroundColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon
-
+          (isSelected && styles.selectedButton) || {
+            borderColor:
+              theme === "light" ? Colors.light.icon : Colors.dark.icon,
+            backgroundColor:
+              theme === "light" ? Colors.light.icon : Colors.dark.icon,
           },
         ]}
         onPress={() => toggleSelection(item)}
       >
         <ThemedText
-          style={[
-            styles.interestText,
-            isSelected && styles.selectedText,
-          ]}
+          style={[styles.interestText, isSelected && styles.selectedText]}
         >
           {item}
         </ThemedText>
@@ -80,19 +88,24 @@ export default function Interests() {
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.headerContainer}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                  <Entypo name="chevron-small-left" size={45} color={theme === 'light' ? Colors.light.icon : Colors.dark.icon} />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerText}>Finishing Up</ThemedText>
-              </ThemedView>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Entypo
+            name="chevron-small-left"
+            size={45}
+            color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
+          />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerText}>Finishing Up</ThemedText>
+      </ThemedView>
 
       <ProgressBar progress={0.9} />
 
       <ThemedView style={styles.content}>
-        <ThemedText type='title'>
-          Choose Your Interests
-        </ThemedText>
-        <ThemedText type='info'>
+        <ThemedText type="title">Choose Your Interests</ThemedText>
+        <ThemedText type="info" style={{ marginBottom: 20 }}>
           Select areas you would like to explore
         </ThemedText>
 
@@ -108,11 +121,15 @@ export default function Interests() {
         <TouchableOpacity
           style={[
             styles.nextButton,
-            { backgroundColor: isButtonActive ? Colors.dark.icon : Colors.light.icon },
-             
             {
-              backgroundColor: selectedInterests.length != 0 ? '#0c2a3f' : '#0c2a3f'
-  
+              backgroundColor: isButtonActive
+                ? Colors.dark.icon
+                : Colors.light.icon,
+            },
+
+            {
+              backgroundColor:
+                selectedInterests.length != 0 ? "#0c2a3f" : "#0c2a3f",
             },
           ]}
           onPress={handleNext}
@@ -129,12 +146,12 @@ const styles = StyleSheet.create({
     flex: 1,
     // backgroundColor: Colors.screen,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 60,
   },
   content: {
     flex: 1,
     paddingBottom: 20,
-    marginBottom: 75
+    marginBottom: 75,
   },
   title: {
     fontSize: 22,
@@ -151,7 +168,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: 20,
-    marginTop: 50
+    marginTop: 50,
   },
   row: {
     justifyContent: "space-between",
@@ -169,8 +186,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   selectedButton: {
-    backgroundColor: '#0c2a3f',
-    borderColor: '#0c2a3f',
+    backgroundColor: "#0c2a3f",
+    borderColor: "#0c2a3f",
   },
   interestText: {
     fontSize: 16,
@@ -183,8 +200,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 20 : 20,
-    marginBottom: 100,
+    marginTop: Platform.OS === "ios" ? 5 : 6,
+    marginBottom: 50,
   },
   headerText: {
     fontSize: 25,
@@ -202,6 +219,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "90%",
+    marginTop: 20,
     // backgroundColor: '#0c2a3f'
   },
 });

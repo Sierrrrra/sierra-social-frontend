@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import {
   Image,
   StyleSheet,
@@ -12,19 +13,43 @@ import {
 } from "react-native";
 import { AntDesign } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import events from "@/utils/eventData";
 import EventList from "@/components/EventList";
 
+const EVENTBRITE_PRIVATE_TOKEN = "CQYEEBJJYWBI7MZJ2AJA";
+const BASE_URL = "https://www.eventbriteapi.com/v3";
+
+const keywords = [
+  "tech",
+  "bars",
+  "food",
+  "concerts",
+  "fitness",
+  "cooking",
+  "dating",
+  "networking",
+];
+
 const categories = [
   "All Events",
-  "Tech & Innovation",
-  "Career",
-  "Wellness",
+  "Food & Drinks",
+  "Music",
+  "Bars",
+  "Nightlife",
+  "Travel & Adventure",
   "Entertainment",
+  "Weekend Trips",
+  "Education",
+  "Fitness & Wellness",
+  "Arts & Culture",
+  "Dating",
+  "Business & Networking",
+  "Technology & Innovation",
+  "Crafting",
+  "Tech-Free Connections",
 ];
 
 export default function Home() {
@@ -33,10 +58,7 @@ export default function Home() {
   const [searchText, setSearchText] = useState("");
   const theme = useColorScheme() ?? "light";
   const router = useRouter();
-  const searchBoxHeight = useRef(new Animated.Value(0)).current;
-  const contentOpacity = useRef(new Animated.Value(1)).current;
 
-  // Filter events based on category or search text
   const filteredEvents = isSearchActive
     ? events.filter(
         (event) =>
@@ -52,6 +74,11 @@ export default function Home() {
 
   const handleCategory = (category) => setSelectedCategory(category);
 
+  const handleSearchToggle = () => {
+    setIsSearchActive(!isSearchActive);
+    setSearchText("");
+  };
+
   const handleNavigateAddEvent = () => {
     router.push({
       pathname: "/form/[form]",
@@ -60,37 +87,6 @@ export default function Home() {
       },
     });
   };
-
-  const handleSearchToggle = () => {
-    if (isSearchActive) {
-      Animated.timing(searchBoxHeight, {
-        toValue: 0,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: false,
-      }).start(() => {
-        setIsSearchActive(false);
-        setSearchText("");
-      });
-    } else {
-      setIsSearchActive(true);
-      Animated.timing(searchBoxHeight, {
-        toValue: 40,
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: false,
-      }).start();
-    }
-  };
-
-  useEffect(() => {
-    Animated.timing(contentOpacity, {
-      toValue: 1,
-      duration: 300,
-      easing: Easing.out(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  }, [filteredEvents]);
 
   return (
     <ThemedView style={styles.screenContainer}>
@@ -105,80 +101,67 @@ export default function Home() {
         headerTitle="sierra"
         headerTitleFontSize={50}
       >
-        <ScrollView
-          contentContainerStyle={styles.scrollViewContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Search and Category Filter */}
-          <View style={styles.categoryContainer}>
-            <Animated.View
-              style={[styles.searchBoxContainer, { height: searchBoxHeight }]}
+        <View style={styles.categoryContainer}>
+          {isSearchActive ? (
+            <View style={styles.searchBoxContainer}>
+              <TextInput
+                style={styles.searchBox}
+                placeholder="search events by title, creator, location, etc."
+                placeholderTextColor="#aaa"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              <Pressable onPress={handleSearchToggle} style={styles.closeIcon}>
+                <AntDesign name="close" size={20} color="#333" />
+              </Pressable>
+            </View>
+          ) : (
+            <ScrollView
+              style={styles.categoryScrollView}
+              horizontal
+              showsHorizontalScrollIndicator={false}
             >
-              {isSearchActive && (
-                <TextInput
-                  style={styles.searchBox}
-                  placeholder="search events by title, creator, location etc."
-                  placeholderTextColor="#aaa"
-                  value={searchText}
-                  onChangeText={setSearchText}
-                />
-              )}
-              {isSearchActive && (
-                <Pressable
-                  onPress={handleSearchToggle}
-                  style={styles.closeIcon}
-                >
-                  <AntDesign name="close" size={20} color="#333" />
-                </Pressable>
-              )}
-            </Animated.View>
-            {!isSearchActive && (
-              <ScrollView
-                style={styles.categoryScrollView}
-                horizontal
-                showsHorizontalScrollIndicator={false}
+              <Pressable
+                style={styles.searchIconContainer}
+                onPress={handleSearchToggle}
               >
+                <AntDesign
+                  name="search1"
+                  size={20}
+                  color={theme === "light" ? "#333" : "#fff"}
+                />
+              </Pressable>
+              {categories.map((category) => (
                 <Pressable
-                  style={styles.searchIconContainer}
-                  onPress={handleSearchToggle}
+                  key={category}
+                  style={[
+                    styles.categoryButton,
+                    selectedCategory === category && styles.activeCategory,
+                  ]}
+                  onPress={() => handleCategory(category)}
                 >
-                  <AntDesign
-                    name="search1"
-                    size={20}
-                    color={theme === "light" ? "#333" : "#fff"}
-                  />
-                </Pressable>
-                {categories.map((category) => (
-                  <Pressable
-                    key={category}
+                  <Text
                     style={[
-                      styles.categoryButton,
-                      selectedCategory === category && styles.activeCategory,
+                      styles.categoryText,
+                      selectedCategory === category &&
+                        styles.activeCategoryText,
                     ]}
-                    onPress={() => handleCategory(category)}
                   >
-                    <Text
-                      style={[
-                        styles.categoryText,
-                        selectedCategory === category &&
-                          styles.activeCategoryText,
-                      ]}
-                    >
-                      {category}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            )}
-          </View>
+                    {category}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        </View>
 
-          {/* Render Filtered Events */}
-          <Animated.View style={{ opacity: contentOpacity }}>
+        <View style={{ flex: 1, height: 540, marginBottom: 20 }}>
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             {filteredEvents.map((event) => (
               <EventList event={event} key={event.id} />
             ))}
-          </Animated.View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </ParallaxScrollView>
 
       {/* Floating Button */}
@@ -202,49 +185,23 @@ export default function Home() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    paddingBottom: 100,
-  },
-  scrollViewContainer: {
-    gap: 10,
   },
   categoryContainer: {
-    marginVertical: 10,
-    marginBottom: 0,
+    height: 30,
+    justifyContent: "center",
+    // backgroundColor: "#f5f5f5",
+    paddingHorizontal: 10,
   },
   categoryScrollView: {
     flexDirection: "row",
   },
-  searchIconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 10,
-  },
-  categoryButton: {
-    backgroundColor: "#333",
-    paddingVertical: 6,
-    paddingHorizontal: 13,
-    borderRadius: 20,
-    marginHorizontal: 4,
-  },
-  activeCategory: {
-    backgroundColor: "#fff",
-  },
-  activeCategoryText: {
-    fontSize: 12,
-    color: "black",
-    fontWeight: "bold",
-  },
-  categoryText: {
-    fontSize: 12,
-    color: "#fff",
-  },
   searchBoxContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
     borderRadius: 20,
     paddingHorizontal: 10,
-    overflow: "hidden",
+    flex: 1,
   },
   searchBox: {
     flex: 1,
@@ -254,6 +211,31 @@ const styles = StyleSheet.create({
   },
   closeIcon: {
     marginLeft: 10,
+  },
+  categoryButton: {
+    backgroundColor: "#333",
+    paddingVertical: 10,
+    paddingHorizontal: 13,
+    borderRadius: 20,
+    marginHorizontal: 4,
+    // height: 40,
+  },
+  activeCategory: {
+    backgroundColor: "#fff",
+  },
+  activeCategoryText: {
+    fontSize: 10,
+    color: "black",
+    fontWeight: "bold",
+  },
+  categoryText: {
+    fontSize: 10,
+    color: "#fff",
+  },
+  searchIconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 10,
   },
   floatingButton: {
     position: "absolute",

@@ -1,8 +1,8 @@
-import React from 'react';
-import { TextInput, StyleSheet } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import React from "react";
+import { TextInput, StyleSheet } from "react-native";
+import { ThemedView } from "@/components/ThemedView";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
 export default function MyInput({
   label,
@@ -10,21 +10,37 @@ export default function MyInput({
   onChangeText,
   secureTextEntry,
   keyboardType,
-  width = '100%',
+  width = "100%",
   height = 50,
   multiline,
   Ionicons,
 }) {
-    const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? "light";
   return (
-    <ThemedView style={[styles.inputRow, { width, height }, {borderBottomColor: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}>
+    <ThemedView
+      style={[
+        styles.inputRow,
+        { width, height },
+        {
+          borderBottomColor:
+            theme === "light" ? Colors.light.gray : Colors.dark.gray,
+        },
+      ]}
+    >
       {/* Render the icon if passed */}
-      {Ionicons && <ThemedView style={styles.iconContainer}>{Ionicons}</ThemedView>}
+      {Ionicons && (
+        <ThemedView style={styles.iconContainer}>{Ionicons}</ThemedView>
+      )}
 
       <TextInput
         placeholder={label}
-        placeholderTextColor={theme === 'light' ? Colors.light.icon : Colors.dark.icon}
-        style={[styles.textInput, {color: theme === 'light' ? Colors.light.icon : Colors.dark.icon}]}
+        placeholderTextColor={
+          theme === "light" ? Colors.light.icon : Colors.dark.icon
+        }
+        style={[
+          styles.textInput,
+          { color: theme === "light" ? Colors.light.icon : Colors.dark.icon },
+        ]}
         value={value}
         multiline={multiline}
         onChangeText={onChangeText}
@@ -37,17 +53,17 @@ export default function MyInput({
 
 const styles = StyleSheet.create({
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderBottomWidth: 1,
-    // borderBottomColor: Colors.primary,
+    // borderBottomColor: "#e0e0e0",
     marginBottom: 15,
     paddingBottom: 5,
   },
   iconContainer: {
     marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   textInput: {
     flex: 1,

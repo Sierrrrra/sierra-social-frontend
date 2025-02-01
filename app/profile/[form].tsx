@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
   Text,
+  Dimensions,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CountryPicker from "react-native-country-picker-modal";
@@ -25,6 +26,7 @@ import { ThemedView } from "@/components/ThemedView";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Colors } from "@/constants/Colors";
+import GooglePlacesInput from "@/components/GooglePlacesInput";
 
 export default function EditProfileScreen() {
   const [name, setName] = useState("Israel Kollie");
@@ -40,6 +42,7 @@ export default function EditProfileScreen() {
   const [jobTitle, setJobTitle] = useState("");
   const [workplace, setWorkplace] = useState("");
   const [about, setAbout] = useState("");
+
   const [showSection, setShowSection] = useState(false);
   const [date, setDate] = useState(new Date());
   const [show, setShow] = useState(false);
@@ -49,6 +52,15 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { event } = useGlobalSearchParams();
   const [isPickerOpen, setPickerOpen] = useState(false);
+
+  console.log("cityyyy:", city);
+  const { height } = Dimensions.get("window");
+  const modalHeight = height * 0.1; // 40% screen height
+
+  const handlePlaceSelected = (place) => {
+    setCity(place);
+    console.log("Selected Place:", place);
+  };
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -88,6 +100,7 @@ export default function EditProfileScreen() {
         keyboardVerticalOffset={90}
       >
         <ScrollView
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ flexGrow: 1 }}
           showsVerticalScrollIndicator={false}
         >
@@ -151,15 +164,10 @@ export default function EditProfileScreen() {
                   withFlag
                   withFilter
                   onSelect={(country) => setCountryCode(country.cca2)}
+                  style={{ modal: { height: modalHeight } }}
                   theme={{
                     backgroundColor: "#fff",
                     fontSize: 16,
-                    container: {
-                      maxHeight: 300, // Limit height of the modal
-                    },
-                    listView: {
-                      maxHeight: 200, // Restrict search results height
-                    },
                     searchTextInput: {
                       fontSize: 16,
                       borderWidth: 1,
@@ -169,109 +177,36 @@ export default function EditProfileScreen() {
                     },
                   }}
                 />
-
                 <TextInput
                   style={styles.phoneInput}
                   value={phone}
-                  onChangeText={(text) => setPhone(text)}
+                  onChangeText={setPhone}
                   keyboardType="phone-pad"
                   placeholder="Enter your phone number"
                 />
               </View>
 
               <ThemedText style={styles.label}>City</ThemedText>
-              <GooglePlacesAutocomplete
-                placeholder="Event Location"
-                disableScroll={true}
-                fetchDetails={true}
-                onPress={(data, details = null) => {
-                  console.log(data, details);
-                  // Update state with the selected location
-                  setCity(details?.formatted_address || data.description);
-                }}
-                query={{
-                  key: "AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk-n8pI3Q",
-                  language: "en",
-                }}
-                styles={{
-                  container: { flex: 1, zIndex: 1 },
-                  textInputContainer: {
-                    width: "100%",
-                  },
-                  textInput: {
-                    height: 45,
-                    // padding: 10,
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#e0e0e0",
-                    marginBottom: 15,
-                    paddingBottom: 5,
-                    fontSize: 17,
-                    backgroundColor: "none",
-                    color: "white",
-                  },
-                  predefinedPlacesDescription: {
-                    color: "#1faadb",
-                  },
-                  row: {
-                    backgroundColor: "#fff",
-                    padding: 13,
-                    height: 44,
-                    flexDirection: "row",
-                  },
-                  listView: { zIndex: 2 },
-                }}
-                textInputProps={{
-                  value: city, // Bind the state to the input value
-                  onChangeText: (text) => setCity(text), // Update state when user types manually
-                }}
-              />
+              <ThemedView style={{ marginLeft: -10 }}>
+                <GooglePlacesInput
+                  placeholder="City"
+                  onPlaceSelected={(city) => setCity(city)}
+                  // stylesOverride={{
+                  //   textInput: { color: "black" },
+                  // }}
+                />
+              </ThemedView>
 
               <ThemedText style={styles.label}>Home Town</ThemedText>
-              <GooglePlacesAutocomplete
-                placeholder="Home Town"
-                disableScroll={true}
-                fetchDetails={true}
-                onPress={(data, details = null) => {
-                  console.log(data, details);
-                  // Update state with the selected location
-                  setHomeTown(details?.formatted_address || data.description);
-                }}
-                query={{
-                  key: "AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk-n8pI3Q",
-                  language: "en",
-                }}
-                styles={{
-                  container: { flex: 1, zIndex: 1 },
-                  textInputContainer: {
-                    width: "100%",
-                  },
-                  textInput: {
-                    height: 45,
-                    // padding: 10,
-                    borderBottomWidth: 1,
-                    borderBottomColor: "#e0e0e0",
-                    marginBottom: 15,
-                    paddingBottom: 5,
-                    fontSize: 17,
-                    backgroundColor: "none",
-                    color: "white",
-                  },
-                  predefinedPlacesDescription: {
-                    color: "#1faadb",
-                  },
-                  row: {
-                    backgroundColor: "#fff",
-                    padding: 13,
-                    height: 44,
-                    flexDirection: "row",
-                  },
-                  listView: { zIndex: 2 },
-                }}
-                textInputProps={{
-                  value: homeTown, // Bind the state to the input value
-                  onChangeText: (text) => setHomeTown(text), // Update state when user types manually
-                }}
-              />
+              <ThemedView style={{ marginLeft: -10 }}>
+                <GooglePlacesInput
+                  placeholder="Home Town"
+                  onPlaceSelected={(town) => setHomeTown(town)}
+                  // stylesOverride={{
+                  //   textInput: { color: "black" },
+                  // }}
+                />
+              </ThemedView>
             </ThemedView>
 
             <ThemedView style={styles.section}>
@@ -444,7 +379,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 16,
-    color: "#fff",
+    color: "#000",
   },
   dateField: {
     borderBottomWidth: 1,

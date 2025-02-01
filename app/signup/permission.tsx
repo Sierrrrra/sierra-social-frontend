@@ -181,7 +181,7 @@ export default function UserPermissionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 45,
   },
   content: {
     flex: 1,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginTop: Platform.OS === "ios" ? 20 : 20,
-    marginBottom: 100,
+    marginBottom: 50,
   },
   headerText: {
     fontSize: 25,

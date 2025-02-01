@@ -102,63 +102,55 @@ export default function TabTwoScreen() {
     const { status } = await Calendar.requestCalendarPermissionsAsync();
     console.log("Permission status:", status);
 
-    if (status === "granted") {
-      const defaultCalendar = await Calendar.getDefaultCalendarAsync();
-      console.log("Default calendar:", defaultCalendar);
-
-      if (!defaultCalendar) {
-        Alert.alert(
-          "No default calendar found",
-          "Please set up a default calendar to add events."
-        );
-        return;
-      }
-
-      try {
-        // Combine date and time strings
-        const dateString = eventObject.date; // Example: "November 12, 2014"
-        const timeString = eventObject.time; // Example: "9:00 AM"
-        const dateTimeString = `${dateString} ${timeString}`;
-        console.log("Combined date and time:", dateTimeString);
-
-        // Parse date and time
-        const startDate = parse(
-          dateTimeString,
-          "MMMM d, yyyy h:mm a",
-          new Date()
-        );
-        console.log("Parsed start date:", startDate);
-
-        if (isNaN(startDate.getTime())) {
-          throw new Error("Invalid date or time format");
-        }
-
-        // Set end time (2 hours after start time)
-        const endDate = new Date(startDate);
-        endDate.setHours(startDate.getHours() + 2);
-
-        console.log("Event start date:", startDate);
-        console.log("Event end date:", endDate);
-
-        // Create the calendar event
-        const eventId = await Calendar.createEventAsync(defaultCalendar.id, {
-          title: eventObject.title,
-          startDate,
-          endDate,
-          location: eventObject.location,
-          notes: eventObject.details,
-        });
-
-        console.log("Event created with ID:", eventId);
-        Alert.alert("Success", "Event added to your calendar!");
-      } catch (error) {
-        console.error("Error creating calendar event:", error.message);
-        Alert.alert("Error", "Failed to add event to calendar.");
-      }
-    } else {
+    if (status !== "granted") {
       Alert.alert(
         "Permission Denied",
         "Calendar permissions are required to add events."
+      );
+      return;
+    }
+
+    try {
+      // Combine date and time strings
+      const dateString = eventObject.date; // Example: "November 12, 2014"
+      const timeString = eventObject.time; // Example: "9:00 AM"
+      const dateTimeString = `${dateString} ${timeString}`;
+      console.log("Combined date and time:", dateTimeString);
+
+      // Parse date and time
+      const startDate = parse(
+        dateTimeString,
+        "MMMM d, yyyy h:mm a",
+        new Date()
+      );
+      console.log("Parsed start date:", startDate);
+
+      if (isNaN(startDate.getTime())) {
+        throw new Error("Invalid date or time format");
+      }
+
+      // Set end time (2 hours after start time)
+      const endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 2);
+
+      console.log("Event start date:", startDate);
+      console.log("Event end date:", endDate);
+
+      // Use createEventInCalendarAsync to open the calendar interface
+      await Calendar.createEventInCalendarAsync({
+        title: eventObject.title,
+        startDate,
+        endDate,
+        location: eventObject.location,
+        notes: eventObject.details,
+      });
+
+      console.log("Event creation interface opened in calendar");
+    } catch (error) {
+      console.error("Error handling calendar event:", error.message);
+      Alert.alert(
+        "Error",
+        error.message || "Failed to open calendar for editing."
       );
     }
   };
