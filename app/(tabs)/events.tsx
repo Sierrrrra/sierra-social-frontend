@@ -2,213 +2,245 @@ import React, { useState } from "react";
 import {
   StyleSheet,
   Image,
-  Platform,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
+  Animated,
 } from "react-native";
-import { useRouter, Link } from "expo-router";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 
-import { Collapsible } from "@/components/Collapsible";
-import { ExternalLink } from "@/components/ExternalLink";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { IconSymbol } from "@/components/ui/IconSymbol";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
+import { Calendar, MapPin, Users, ChevronRight } from "lucide-react";
 import events from "@/utils/eventData";
 
 const createdEvents = events.slice(1, 3);
-
 const joinedEvents = events.slice(4, 6);
 
-export default function TabTwoScreen() {
-  const [selectedTab, setSelectedTab] = useState("Created"); // State for tab switching
-  const theme = useColorScheme() ?? "light"; // Assuming light theme for now
+export default function EventsScreen() {
+  const [selectedTab, setSelectedTab] = useState("Created");
+  const theme = useColorScheme() ?? "light";
   const router = useRouter();
+  const isDark = theme === "dark";
 
   const handleNavigate = (item) => {
     router.push({
       pathname: "/event/[event]",
       params: {
-        event: item.id, // Dynamic parameter for the event
-        data: JSON.stringify(item), // Serialized event data
+        event: item.id,
+        data: JSON.stringify(item),
       },
     });
   };
 
   const renderEventCard = (item) => (
     <TouchableOpacity
-      style={[
-        styles.eventCard,
-        {
-          backgroundColor:
-            theme === "light"
-              ? Colors.light.background
-              : Colors.dark.background,
-        },
-      ]}
+      style={styles.eventCard}
       onPress={() => handleNavigate(item)}
       key={item.id}
+      activeOpacity={0.8}
     >
-      <ThemedText style={styles.eventTitle}>{item.title}</ThemedText>
-      <ThemedText style={styles.eventDetails}>{item.date}</ThemedText>
-      <ThemedText style={styles.eventDetails}>{item.location}</ThemedText>
+      <Image 
+        source={item.image || require("@/assets/images/sira-party.jpg")} 
+        style={styles.eventImage}
+      />
+      <LinearGradient
+        colors={['transparent', 'rgba(0,0,0,0.8)']}
+        style={styles.gradient}
+      />
+      <View style={styles.eventContent}>
+        <ThemedText style={styles.eventTitle}>{item.title}</ThemedText>
+        
+        <View style={styles.eventDetails}>
+          <View style={styles.detailItem}>
+            <Calendar size={14} color="#fff" />
+            <ThemedText style={styles.detailText}>{item.date}</ThemedText>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <MapPin size={14} color="#fff" />
+            <ThemedText style={styles.detailText}>{item.location}</ThemedText>
+          </View>
+          
+          <View style={styles.detailItem}>
+            <Users size={14} color="#fff" />
+            <ThemedText style={styles.detailText}>{item.attendees || "12"} attending</ThemedText>
+          </View>
+        </View>
+      </View>
+      <View style={styles.cardOverlay} />
     </TouchableOpacity>
   );
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/sira-party.jpg")}
-          style={styles.reactLogo}
-        />
-      }
-      headerTitle="My Events"
-      headerTitleFontSize={30}
-    >
-      <ThemedView
-        style={[
-          styles.container,
-          { backgroundColor: theme === "light" ? "#333" : "#333" },
-        ]}
-      >
-        {/* Tabs Below Header Image */}
-        <View
+    <ThemedView style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      <View style={styles.header}>
+        <ThemedText style={styles.headerTitle}>My Events</ThemedText>
+      </View>
+      
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
           style={[
-            styles.tabsContainer,
-            { backgroundColor: theme === "light" ? "#333" : "#333" },
+            styles.tabButton,
+            selectedTab === "Created" && styles.activeTab,
           ]}
+          onPress={() => setSelectedTab("Created")}
         >
-          <TouchableOpacity
+          <ThemedText
             style={[
-              styles.tabButton,
-              selectedTab === "Created" && {
-                borderBottomColor: "#fff",
-              },
+              styles.tabText,
+              selectedTab === "Created" && styles.activeTabText,
             ]}
-            onPress={() => setSelectedTab("Created")}
           >
-            <ThemedText
-              style={[
-                styles.tabText,
-                selectedTab === "Created" && {
-                  color: "#fff",
-                  fontWeight: "bold",
-                },
-              ]}
-            >
-              Created
-            </ThemedText>
-          </TouchableOpacity>
-          <TouchableOpacity
+            Created
+          </ThemedText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.tabButton,
+            selectedTab === "Joined" && styles.activeTab,
+          ]}
+          onPress={() => setSelectedTab("Joined")}
+        >
+          <ThemedText
             style={[
-              styles.tabButton,
-              selectedTab === "Joined" && {
-                borderBottomColor: "#fff",
-              },
+              styles.tabText,
+              selectedTab === "Joined" && styles.activeTabText,
             ]}
-            onPress={() => setSelectedTab("Joined")}
           >
-            <ThemedText
-              style={[
-                styles.tabText,
-                selectedTab === "Joined" && {
-                  color: "#fff",
-                  fontWeight: "bold",
-                },
-              ]}
-            >
-              Joined
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
+            Joined
+          </ThemedText>
+        </TouchableOpacity>
+      </View>
 
-        {/* Event List */}
-        <ScrollView contentContainerStyle={styles.eventsContainer}>
-          {selectedTab === "Created"
-            ? createdEvents.map(renderEventCard)
-            : joinedEvents.map(renderEventCard)}
-        </ScrollView>
-      </ThemedView>
-    </ParallaxScrollView>
+      <ScrollView 
+        contentContainerStyle={styles.eventsContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {selectedTab === "Created"
+          ? createdEvents.map(renderEventCard)
+          : joinedEvents.map(renderEventCard)}
+          
+        <TouchableOpacity style={styles.createEventButton}>
+          <ThemedText style={styles.createEventText}>
+            {selectedTab === "Created" ? "Create New Event" : "Find More Events"}
+          </ThemedText>
+          <ChevronRight size={18} color="#0c2a3f" />
+        </TouchableOpacity>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#808080",
-  },
   container: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
   },
   tabsContainer: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 10,
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   tabButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: "rgba(140, 140, 140, 0.1)",
   },
   activeTab: {
-    borderBottomColor: "#007BFF",
+    backgroundColor: "#0c2a3f",
   },
   tabText: {
-    fontSize: 16,
-    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
   },
   activeTabText: {
-    color: "#007BFF",
-    fontWeight: "bold",
+    color: "#fff",
   },
   eventsContainer: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 0,
   },
   eventCard: {
-    padding: 16,
-    marginVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: "hidden",
+    height: 200,
+    position: "relative",
   },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  eventDetails: {
-    fontSize: 14,
-    // color: '#555',
-  },
-  reactLogo: {
-    height: "100%",
+  eventImage: {
     width: "100%",
+    height: "100%",
+    position: "absolute",
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '70%',
+    zIndex: 1,
+  },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+  },
+  eventContent: {
+    position: "absolute",
     bottom: 0,
     left: 0,
-    position: "absolute",
+    right: 0,
+    padding: 15,
+    zIndex: 2,
+  },
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 8,
+  },
+  eventDetails: {
+    flexDirection: "column",
+    gap: 5,
+  },
+  detailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 15,
+  },
+  detailText: {
+    fontSize: 12,
+    color: "#fff",
+    marginLeft: 5,
+  },
+  createEventButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(140, 140, 140, 0.1)",
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 10,
+    marginBottom: 30,
+  },
+  createEventText: {
+    fontWeight: "600",
+    marginRight: 5,
   },
 });

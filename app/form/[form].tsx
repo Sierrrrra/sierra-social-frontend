@@ -1,534 +1,1264 @@
-import React, { useLayoutEffect, useEffect, useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   StyleSheet,
   Image,
   Platform,
-  Share,
   TouchableOpacity,
+  View,
   ScrollView,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Animated,
+  Alert,
+  TextInput,
 } from "react-native";
-import {
-  useLocalSearchParams,
-  useGlobalSearchParams,
-  useRouter,
-} from "expo-router";
-import { useNavigation } from "@react-navigation/native";
-import MapView, { Marker } from "react-native-maps";
-import { Entypo, Ionicons, FontAwesome5 } from "@expo/vector-icons";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePickerExpo from 'expo-image-picker';
+import { format } from "date-fns";
 
-import Btn from "@/components/Btn";
-import Input from "@/components/Input";
-import DatePicker from "@/components/DatePicker";
-import ImagePicker from "@/components/ImagePicker";
-import SwitchBtn from "@/components/SwitchBtn";
-import LocationSearch from "@/components/LocationSearch";
-import { Collapsible } from "@/components/Collapsible";
-import { ExternalLink } from "@/components/ExternalLink";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import GooglePlacesInput from "@/components/GooglePlacesInput";
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  MapPin, 
+  Users, 
+  ChevronLeft, 
+  Image as ImageIcon, 
+  Tag,
+  DollarSign,
+  Plus,
+  X,
+  Check,
+  Search,
+  Camera,
+  Upload,
+  UserPlus,
+  Globe,
+  Lock
+} from "lucide-react";
 
-const usersSampleData = [
-  { id: "1", name: "John Doe" },
-  { id: "2", name: "Jane Smith" },
-  { id: "3", name: "Alice Johnson" },
-  { id: "4", name: "Bob Brown" },
-  { id: "5", name: "Charlie White" },
-  { id: "6", name: "Diana Prince" },
-  { id: "7", name: "Ethan Hunt" },
-  { id: "8", name: "Fiona Apple" },
-  { id: "9", name: "George Clooney" },
-  { id: "10", name: "Hannah Montana" },
+// Sample data for categories
+const categories = [
+  { id: "1", name: "Dinner", icon: "utensils" },
+  { id: "2", name: "Outdoors", icon: "tree" },
+  { id: "3", name: "Music", icon: "music" },
+  { id: "4", name: "Sports", icon: "activity" },
+  { id: "5", name: "Art", icon: "palette" },
+  { id: "6", name: "Business", icon: "briefcase" },
+  { id: "7", name: "Education", icon: "book" },
+  { id: "8", name: "Technology", icon: "cpu" },
+  { id: "9", name: "Wellness", icon: "heart" },
 ];
 
-export default function TabTwoScreen() {
-  const [modalVisible, setModalVisible] = useState(false);
+// Sample data for users
+const usersSampleData = [
+  { id: "1", name: "John Doe", avatar: require("@/assets/images/starter-bg-01.jpg") },
+  { id: "2", name: "Jane Smith", avatar: require("@/assets/images/starter-bg-02.jpg") },
+  { id: "3", name: "Alice Johnson", avatar: require("@/assets/images/starter-bg-03.jpg") },
+  { id: "4", name: "Bob Brown", avatar: require("@/assets/images/starter-bg-04.jpg") },
+  { id: "5", name: "Charlie White", avatar: require("@/assets/images/starter-bg-05.jpg") },
+  { id: "6", name: "Diana Prince", avatar: require("@/assets/images/starter-bg-06.jpg") },
+  { id: "7", name: "Ethan Hunt", avatar: require("@/assets/images/starter-bg-01.jpg") },
+  { id: "8", name: "Fiona Apple", avatar: require("@/assets/images/starter-bg-02.jpg") },
+  { id: "9", name: "George Clooney", avatar: require("@/assets/images/starter-bg-03.jpg") },
+  { id: "10", name: "Hannah Montana", avatar: require("@/assets/images/starter-bg-04.jpg") },
+];
+
+export default function CreateEventScreen() {
+  const router = useRouter();
+  const theme = useColorScheme() ?? "light";
+  const isDark = theme === "dark";
+  const scrollY = useRef(new Animated.Value(0)).current;
+  
+  // Event details state
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventLocation, setEventLocation] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [eventDate, setEventDate] = useState(new Date());
+  const [eventTime, setEventTime] = useState(new Date());
+  const [eventImage, setEventImage] = useState(null);
+  const [isFreeEvent, setIsFreeEvent] = useState(true);
+  const [eventPrice, setEventPrice] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  
+  // Date/time picker state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  // Group modal state
+  const [groupModalVisible, setGroupModalVisible] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupDescription, setGroupDescription] = useState("");
+  const [groupVisibility, setGroupVisibility] = useState("Private");
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [groupVisibility, setGroupVisibility] = useState("Private");
-
-  const [startDate, setStartDate] = useState(new Date());
-  // const [endDate, setEndDate] = useState(new Date());
-  // const [eventLocation, setEventLocation] = useState('');
-
-  const [eventTime, setEventTime] = useState(new Date());
-  const [isFreeEvent, setIsFreeEvent] = useState(true);
-  const [eventCost, setEventCost] = useState(0);
-  const [eventTitle, setEventTitle] = useState("");
-  const [eventSummary, setEventSummary] = useState("");
-  const [groupLocation, setGroupLocation] = useState("");
-  const [location, setLocation] = useState("");
-  const [latLng, setLatLng] = useState({});
-
-  console.log(location);
-
-  // const handleLocationSelect = (locationData) => {
-  //   console.log("Location:", locationData)
-
-  //   setLocation(locationData.description);
-  //   setLatLng({ lat: locationData.lat, lng: locationData.lng });
-  // };
-
-  const handleCreateEvent = () => {
-    console.log(
-      "Event created!",
-      eventTitle,
-      location,
-      startDate,
-      eventTime,
-      eventSummary,
-      location
-    );
+  
+  // Image picker modal state
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
+  
+  // Form validation
+  const isFormValid = eventTitle.trim() !== "" && 
+                      eventLocation.trim() !== "" && 
+                      eventDescription.trim() !== "" &&
+                      selectedCategories.length > 0;
+  
+  // Header animation
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  
+  // Handle date change
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || eventDate;
+    setShowDatePicker(false);
+    setEventDate(currentDate);
   };
-
-  const navigation = useNavigation();
-  const theme = useColorScheme() ?? "light";
-  const router = useRouter();
-
-  const { event } = useGlobalSearchParams();
-  // const { event } = route.params;
-  console.log(event);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
-
+  
+  // Handle time change
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || eventTime;
+    setShowTimePicker(false);
+    setEventTime(currentTime);
+  };
+  
+  // Handle category selection
+  const toggleCategory = (categoryId) => {
+    if (selectedCategories.includes(categoryId)) {
+      setSelectedCategories(selectedCategories.filter(id => id !== categoryId));
+    } else {
+      setSelectedCategories([...selectedCategories, categoryId]);
+    }
+  };
+  
+  // Handle user selection for group
   const handleUserSelect = (user) => {
     if (!selectedUsers.find((u) => u.id === user.id)) {
       setSelectedUsers([...selectedUsers, user]);
     }
   };
-
+  
+  // Handle user removal from group
   const handleUserRemove = (userId) => {
     setSelectedUsers(selectedUsers.filter((user) => user.id !== userId));
   };
-
+  
+  // Filter users based on search query
   const filteredUsers = searchQuery
     ? usersSampleData.filter((user) =>
         user.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : usersSampleData.slice(0, 5); // Show only the first 5 users initially
+    : usersSampleData;
+  
+  // Handle image picking
+  const pickImage = async (source) => {
+    let result;
+    
+    if (source === 'camera') {
+      const { status } = await ImagePickerExpo.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Camera permission is required to take photos');
+        return;
+      }
+      
+      result = await ImagePickerExpo.launchCameraAsync({
+        mediaTypes: ImagePickerExpo.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+    } else {
+      const { status } = await ImagePickerExpo.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Media library permission is required to select photos');
+        return;
+      }
+      
+      result = await ImagePickerExpo.launchImageLibraryAsync({
+        mediaTypes: ImagePickerExpo.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+      });
+    }
+    
+    if (!result.canceled) {
+      setEventImage(result.assets[0].uri);
+      setImagePickerVisible(false);
+    }
+  };
+  
+  // Handle create event submission
+  const handleCreateEvent = () => {
+    if (!isFormValid) {
+      Alert.alert(
+        "Incomplete Form",
+        "Please fill in all required fields (title, location, description, and at least one category)."
+      );
+      return;
+    }
+    
+    // Combine date and time
+    const eventDateTime = new Date(eventDate);
+    eventDateTime.setHours(eventTime.getHours());
+    eventDateTime.setMinutes(eventTime.getMinutes());
+    
+    const eventData = {
+      title: eventTitle,
+      location: eventLocation,
+      description: eventDescription,
+      date: eventDate.toISOString(),
+      time: eventTime.toISOString(),
+      price: isFreeEvent ? 0 : parseFloat(eventPrice),
+      isFree: isFreeEvent,
+      categories: selectedCategories,
+      image: eventImage,
+      createdAt: new Date().toISOString(),
+    };
+    
+    console.log("Event created:", eventData);
+    
+    // Show success message and navigate back
+    Alert.alert(
+      "Success!",
+      "Your event has been created successfully.",
+      [
+        { 
+          text: "OK", 
+          onPress: () => router.back() 
+        }
+      ]
+    );
+  };
+  
+  // Handle create group submission
+  const handleCreateGroup = () => {
+    if (!groupName.trim() || !groupDescription.trim() || selectedUsers.length === 0) {
+      Alert.alert(
+        "Incomplete Group",
+        "Please provide a name, description, and select at least one member for your group."
+      );
+      return;
+    }
+    
+    const groupData = {
+      name: groupName,
+      description: groupDescription,
+      visibility: groupVisibility,
+      members: selectedUsers,
+      createdAt: new Date().toISOString(),
+    };
+    
+    console.log("Group created:", groupData);
+    setGroupModalVisible(false);
+    
+    // Reset group form
+    setGroupName("");
+    setGroupDescription("");
+    setGroupVisibility("Private");
+    setSelectedUsers([]);
+    setSearchQuery("");
+    
+    // Show success message
+    Alert.alert("Success!", "Your group has been created successfully.");
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/sira-add.jpg")}
-          style={styles.reactLogo}
-        />
-      }
-      headerTitle="Meet New People"
-      headerTitleFontSize={30}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
     >
-      <ThemedView style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Entypo
-            name="chevron-small-left"
-            size={50}
-            color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
-          />
-        </TouchableOpacity>
-        <ThemedText type="title" style={styles.headerText}>
-          {event}
-        </ThemedText>
-      </ThemedView>
-
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      {/* Animated Header Background */}
+      <Animated.View 
+        style={[
+          styles.headerBackground, 
+          { 
+            opacity: headerOpacity,
+            backgroundColor: isDark ? "#1a1a1a" : "#fff" 
+          }
+        ]}
       >
-        <ThemedView style={{ paddingTop: 15 }}>
-          <ThemedText style={styles.label}>Event Title</ThemedText>
-          <Input
-            label="Enter event title"
-            value={eventTitle}
-            onChangeText={setEventTitle}
-          />
-
-          <ThemedText style={styles.label}>Location</ThemedText>
-          <ThemedView style={{ marginLeft: -11 }}>
-            <GooglePlacesInput
-              placeholder="Event Location"
-              onPlaceSelected={(location) => setLocation(location)}
-              // stylesOverride={{
-              //   textInput: { color: "black" },
-              // }}
-            />
-          </ThemedView>
-
-          <ThemedText style={styles.label}>Summary</ThemedText>
-          <Input
-            label={"Brief summary of the event"}
-            multiline={true}
-            height={70}
-            value={eventSummary}
-            onChangeText={setEventSummary}
-          />
-
-          <DatePicker
-            label="Date"
-            mode="date"
-            value={startDate}
-            onChange={setStartDate}
-          />
-          <DatePicker
-            label="Time"
-            mode="time"
-            value={eventTime}
-            onChange={setEventTime}
-          />
-
-          {/* Switch to toggle Free Event */}
-          <ThemedView style={styles.switchContainer}>
-            <SwitchBtn
-              label={"Free Event"}
-              value={isFreeEvent}
-              onValueChange={setIsFreeEvent}
-            />
-
-            {!isFreeEvent && (
-              <>
-                <Input
-                  label={"Event Cost"}
-                  value={eventCost}
-                  onChangeText={setEventCost}
-                  keyboardType="numeric"
-                />
-              </>
-            )}
-          </ThemedView>
-        </ThemedView>
-      </ScrollView>
-
-      <Collapsible title="Add Event Image">
-        <ImagePicker
-          onImageSelect={(uri) => console.log("Selected image:", uri)}
-        />
-      </Collapsible>
-      <Collapsible title="Add Event to Group">
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={[
-            styles.createGroupButton,
-            {
-              backgroundColor:
-                theme === "light" ? Colors.light.icon : Colors.dark.icon,
-            },
-          ]}
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>Create Event</ThemedText>
+          <View style={styles.placeholderView} />
+        </View>
+      </Animated.View>
+      
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Header */}
+        <View style={styles.pageHeader}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButtonTop}>
+            <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
+          <ThemedText style={styles.pageTitle}>Create Event</ThemedText>
+        </View>
+        
+        {/* Event Image */}
+        <TouchableOpacity 
+          style={styles.imageContainer}
+          onPress={() => setImagePickerVisible(true)}
         >
-          <ThemedText style={styles.createGroupButtonText}>
-            Create New Group
-          </ThemedText>
+          {eventImage ? (
+            <Image source={{ uri: eventImage }} style={styles.eventImage} />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <ImageIcon size={40} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.imagePlaceholderText}>
+                Add Event Cover Image
+              </ThemedText>
+            </View>
+          )}
         </TouchableOpacity>
-      </Collapsible>
-
-      <Modal visible={modalVisible} animationType="slide" transparent={true}>
-        <ThemedView style={styles.modalContainer}>
-          <ThemedView style={styles.modalContent}>
-            <ThemedText style={styles.modalTitle}>Create New Group</ThemedText>
-
-            <Input
-              label="Group Name"
-              value={groupName}
-              onChangeText={setGroupName}
+        
+        {/* Event Details Form */}
+        <View style={styles.formContainer}>
+          {/* Event Title */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <Tag size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Event Title</ThemedText>
+            </View>
+            <TextInput
+              style={[
+                styles.textInput,
+                isDark && styles.textInputDark
+              ]}
+              placeholder="Enter a catchy title for your event"
+              placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+              value={eventTitle}
+              onChangeText={setEventTitle}
             />
-
-            <Input
-              label="Group Description"
-              value={groupDescription}
-              onChangeText={setGroupDescription}
+          </View>
+          
+          {/* Event Location */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <MapPin size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Location</ThemedText>
+            </View>
+            <TextInput
+              style={[
+                styles.textInput,
+                isDark && styles.textInputDark
+              ]}
+              placeholder="Where will this event take place?"
+              placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+              value={eventLocation}
+              onChangeText={setEventLocation}
             />
-
-            <ThemedText style={styles.modalLabel}>Group Type</ThemedText>
-            <ThemedView style={styles.visibilityContainer}>
-              <TouchableOpacity
+          </View>
+          
+          {/* Event Date */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <CalendarIcon size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Date</ThemedText>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.dateTimeButton,
+                isDark && styles.dateTimeButtonDark
+              ]}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <ThemedText style={styles.dateTimeText}>
+                {format(eventDate, "EEEE, MMMM d, yyyy")}
+              </ThemedText>
+              <CalendarIcon size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+            </TouchableOpacity>
+            
+            {showDatePicker && (
+              <DateTimePicker
+                value={eventDate}
+                mode="date"
+                display="default"
+                onChange={onDateChange}
+                minimumDate={new Date()}
+              />
+            )}
+          </View>
+          
+          {/* Event Time */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <Clock size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Time</ThemedText>
+            </View>
+            <TouchableOpacity 
+              style={[
+                styles.dateTimeButton,
+                isDark && styles.dateTimeButtonDark
+              ]}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <ThemedText style={styles.dateTimeText}>
+                {format(eventTime, "h:mm a")}
+              </ThemedText>
+              <Clock size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+            </TouchableOpacity>
+            
+            {showTimePicker && (
+              <DateTimePicker
+                value={eventTime}
+                mode="time"
+                display="default"
+                onChange={onTimeChange}
+              />
+            )}
+          </View>
+          
+          {/* Event Price */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <DollarSign size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Price</ThemedText>
+            </View>
+            
+            <View style={styles.priceContainer}>
+              <TouchableOpacity 
                 style={[
-                  styles.visibilityOption,
-                  groupVisibility === "Private" && {
-                    backgroundColor:
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon,
-                    borderColor:
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon,
-                  },
+                  styles.priceOption,
+                  isFreeEvent && styles.priceOptionSelected,
+                  isDark && isFreeEvent && styles.priceOptionSelectedDark
                 ]}
-                onPress={() => setGroupVisibility("Private")}
+                onPress={() => setIsFreeEvent(true)}
               >
-                <ThemedText style={styles.optionText}>Private</ThemedText>
+                <ThemedText 
+                  style={[
+                    styles.priceOptionText,
+                    isFreeEvent && styles.priceOptionTextSelected
+                  ]}
+                >
+                  Free
+                </ThemedText>
               </TouchableOpacity>
-              <TouchableOpacity
+              
+              <TouchableOpacity 
                 style={[
-                  styles.visibilityOption,
-                  groupVisibility === "Public" && {
-                    backgroundColor:
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon,
-                    borderColor:
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon,
-                  },
+                  styles.priceOption,
+                  !isFreeEvent && styles.priceOptionSelected,
+                  isDark && !isFreeEvent && styles.priceOptionSelectedDark
                 ]}
-                onPress={() => setGroupVisibility("Public")}
+                onPress={() => setIsFreeEvent(false)}
               >
-                <ThemedText style={styles.optionText}>Public</ThemedText>
+                <ThemedText 
+                  style={[
+                    styles.priceOptionText,
+                    !isFreeEvent && styles.priceOptionTextSelected
+                  ]}
+                >
+                  Paid
+                </ThemedText>
               </TouchableOpacity>
-            </ThemedView>
-
-            <Input
-              label="Search and add people to your group"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              // placeholder="Search users"
+            </View>
+            
+            {!isFreeEvent && (
+              <View style={styles.priceInputContainer}>
+                <View style={styles.currencySymbol}>
+                  <ThemedText style={styles.currencyText}>$</ThemedText>
+                </View>
+                <TextInput
+                  style={[
+                    styles.priceInput,
+                    isDark && styles.priceInputDark
+                  ]}
+                  placeholder="0.00"
+                  placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+                  keyboardType="decimal-pad"
+                  value={eventPrice}
+                  onChangeText={setEventPrice}
+                />
+              </View>
+            )}
+          </View>
+          
+          {/* Event Categories */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <Tag size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Categories</ThemedText>
+            </View>
+            
+            <View style={styles.categoriesContainer}>
+              {categories.map(category => (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.categoryChip,
+                    selectedCategories.includes(category.id) && styles.categoryChipSelected,
+                    isDark && selectedCategories.includes(category.id) && styles.categoryChipSelectedDark
+                  ]}
+                  onPress={() => toggleCategory(category.id)}
+                >
+                  <ThemedText 
+                    style={[
+                      styles.categoryText,
+                      selectedCategories.includes(category.id) && styles.categoryTextSelected
+                    ]}
+                  >
+                    {category.name}
+                  </ThemedText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          
+          {/* Event Description */}
+          <View style={styles.inputGroup}>
+            <View style={styles.labelContainer}>
+              <Info size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.inputLabel}>Description</ThemedText>
+            </View>
+            <TextInput
+              style={[
+                styles.textArea,
+                isDark && styles.textAreaDark
+              ]}
+              placeholder="Describe your event. What should attendees expect?"
+              placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+              multiline={true}
+              numberOfLines={5}
+              textAlignVertical="top"
+              value={eventDescription}
+              onChangeText={setEventDescription}
             />
-
+          </View>
+          
+          {/* Create Group Button */}
+          <TouchableOpacity 
+            style={styles.createGroupButton}
+            onPress={() => setGroupModalVisible(true)}
+          >
+            <UserPlus size={20} color="#fff" />
+            <ThemedText style={styles.createGroupButtonText}>
+              Create Group for this Event
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+      </Animated.ScrollView>
+      
+      {/* Create Event Button */}
+      <View style={styles.createButtonContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.createButton,
+            !isFormValid && styles.createButtonDisabled
+          ]}
+          onPress={handleCreateEvent}
+          disabled={!isFormValid}
+        >
+          <ThemedText style={styles.createButtonText}>Create Event</ThemedText>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Image Picker Modal */}
+      <Modal
+        visible={imagePickerVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setImagePickerVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[
+            styles.imagePickerModal,
+            isDark && styles.imagePickerModalDark
+          ]}>
+            <ThemedText style={styles.modalTitle}>Add Event Image</ThemedText>
+            
+            <TouchableOpacity 
+              style={styles.imagePickerOption}
+              onPress={() => pickImage('camera')}
+            >
+              <Camera size={24} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.imagePickerOptionText}>
+                Take Photo
+              </ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.imagePickerOption}
+              onPress={() => pickImage('gallery')}
+            >
+              <Upload size={24} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.imagePickerOptionText}>
+                Choose from Gallery
+              </ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.cancelButton}
+              onPress={() => setImagePickerVisible(false)}
+            >
+              <ThemedText style={styles.cancelButtonText}>Cancel</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Create Group Modal */}
+      <Modal
+        visible={groupModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setGroupModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[
+            styles.groupModal,
+            isDark && styles.groupModalDark
+          ]}>
+            <View style={styles.modalHeader}>
+              <ThemedText style={styles.modalTitle}>Create Group</ThemedText>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setGroupModalVisible(false)}
+              >
+                <X size={24} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Group Name */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>Group Name</ThemedText>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  isDark && styles.textInputDark
+                ]}
+                placeholder="Enter group name"
+                placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+                value={groupName}
+                onChangeText={setGroupName}
+              />
+            </View>
+            
+            {/* Group Description */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>Description</ThemedText>
+              <TextInput
+                style={[
+                  styles.textArea,
+                  isDark && styles.textAreaDark,
+                  { height: 80 }
+                ]}
+                placeholder="What is this group about?"
+                placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+                multiline={true}
+                numberOfLines={3}
+                textAlignVertical="top"
+                value={groupDescription}
+                onChangeText={setGroupDescription}
+              />
+            </View>
+            
+            {/* Group Visibility */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>Group Visibility</ThemedText>
+              <View style={styles.visibilityContainer}>
+                <TouchableOpacity 
+                  style={[
+                    styles.visibilityOption,
+                    groupVisibility === "Private" && styles.visibilityOptionSelected,
+                    isDark && groupVisibility === "Private" && styles.visibilityOptionSelectedDark
+                  ]}
+                  onPress={() => setGroupVisibility("Private")}
+                >
+                  <Lock size={16} color={groupVisibility === "Private" ? "#fff" : (isDark ? "#8da9bc" : "#0c2a3f")} />
+                  <ThemedText 
+                    style={[
+                      styles.visibilityText,
+                      groupVisibility === "Private" && styles.visibilityTextSelected
+                    ]}
+                  >
+                    Private
+                  </ThemedText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[
+                    styles.visibilityOption,
+                    groupVisibility === "Public" && styles.visibilityOptionSelected,
+                    isDark && groupVisibility === "Public" && styles.visibilityOptionSelectedDark
+                  ]}
+                  onPress={() => setGroupVisibility("Public")}
+                >
+                  <Globe size={16} color={groupVisibility === "Public" ? "#fff" : (isDark ? "#8da9bc" : "#0c2a3f")} />
+                  <ThemedText 
+                    style={[
+                      styles.visibilityText,
+                      groupVisibility === "Public" && styles.visibilityTextSelected
+                    ]}
+                  >
+                    Public
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            {/* Search Users */}
+            <View style={styles.inputGroup}>
+              <ThemedText style={styles.inputLabel}>Add Members</ThemedText>
+              <View style={[
+                styles.searchContainer,
+                isDark && styles.searchContainerDark
+              ]}>
+                <Search size={16} color={isDark ? "#8da9bc" : "#999"} />
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search users"
+                  placeholderTextColor={isDark ? "#8da9bc" : "#999"}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+            </View>
+            
+            {/* Selected Users */}
+            {selectedUsers.length > 0 && (
+              <View style={styles.selectedUsersContainer}>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.selectedUsersScroll}
+                >
+                  {selectedUsers.map(user => (
+                    <View key={user.id} style={styles.selectedUserChip}>
+                      <Image source={user.avatar} style={styles.userAvatar} />
+                      <ThemedText style={styles.selectedUserName} numberOfLines={1}>
+                        {user.name}
+                      </ThemedText>
+                      <TouchableOpacity 
+                        style={styles.removeUserButton}
+                        onPress={() => handleUserRemove(user.id)}
+                      >
+                        <X size={14} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+            
+            {/* User List */}
             <FlatList
               data={filteredUsers}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
+              style={styles.userList}
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <TouchableOpacity 
                   style={styles.userItem}
                   onPress={() => handleUserSelect(item)}
                 >
-                  <ThemedText>{item.name}</ThemedText>
+                  <Image source={item.avatar} style={styles.userAvatar} />
+                  <ThemedText style={styles.userName}>{item.name}</ThemedText>
+                  {selectedUsers.some(user => user.id === item.id) ? (
+                    <View style={styles.userSelectedIndicator}>
+                      <Check size={14} color="#fff" />
+                    </View>
+                  ) : (
+                    <Plus size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                  )}
                 </TouchableOpacity>
               )}
               ListEmptyComponent={
-                <ThemedText style={styles.noResultsText}>
-                  No users found
+                <ThemedText style={styles.emptyListText}>
+                  No users found matching your search
                 </ThemedText>
               }
             />
-
-            {/* <FlatList
-              data={filteredUsers}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.userItem}
-                  onPress={() => handleUserSelect(item)}
-                >
-                  <ThemedText>{item.name}</ThemedText>
-                </TouchableOpacity>
-              )}
-            /> */}
-
-            <ThemedView style={styles.selectedUsersContainer}>
-              {selectedUsers.map((user) => (
-                <ThemedView
-                  key={user.id}
-                  style={[
-                    styles.selectedUserChip,
-                    { backgroundColor: theme === "light" ? "#fff" : "#333" },
-                  ]}
-                >
-                  <ThemedText>{user.name}</ThemedText>
-                  <TouchableOpacity onPress={() => handleUserRemove(user.id)}>
-                    <ThemedText style={styles.removeUser}>✕</ThemedText>
-                  </TouchableOpacity>
-                </ThemedView>
-              ))}
-            </ThemedView>
-
-            <ThemedView style={styles.modalActions}>
-              <Btn
-                width="40%"
-                title="Cancel"
-                onPress={() => setModalVisible(false)}
-              />
-              <Btn
-                width="40%"
-                title="Create Group"
-                onPress={() => {
-                  console.log("Group Created:", {
-                    groupName,
-                    groupDescription,
-                    members: selectedUsers,
-                    groupVisibility,
-                  });
-                  setModalVisible(false);
-                  setGroupName("");
-                  setGroupDescription("");
-                  setGroupVisibility("Private");
-                  setSelectedUsers([]);
-                  setSearchQuery("");
-                }}
-              />
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
+            
+            {/* Modal Actions */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity 
+                style={styles.cancelGroupButton}
+                onPress={() => setGroupModalVisible(false)}
+              >
+                <ThemedText style={styles.cancelGroupText}>Cancel</ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[
+                  styles.createGroupModalButton,
+                  (!groupName.trim() || !groupDescription.trim() || selectedUsers.length === 0) && 
+                  styles.createGroupModalButtonDisabled
+                ]}
+                onPress={handleCreateGroup}
+                disabled={!groupName.trim() || !groupDescription.trim() || selectedUsers.length === 0}
+              >
+                <ThemedText style={styles.createGroupModalText}>Create Group</ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
-
-      <ThemedView style={[styles.row, { justifyContent: "center" }]}>
-        <Btn title={"Create Event"} width="100%" onPress={handleCreateEvent} />
-      </ThemedView>
-    </ParallaxScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
+  container: {
+    flex: 1,
   },
-  titleContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  map: {
-    width: "100%",
-    height: 250,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  reactLogo: {
-    height: "100%",
-    width: "100%",
-    bottom: 0,
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
     left: 0,
-    position: "absolute",
+    right: 0,
+    height: 60,
+    zIndex: 10,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    // justifyContent: 'center',
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    // marginBottom: 100,
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    height: 60,
+    paddingTop: Platform.OS === 'ios' ? 10 : 0,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
   },
   backButton: {
-    position: "absolute",
-    left: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerText: {
-    // fontSize: 25,
-    // fontWeight: 'bold',
-    marginLeft: 30,
-    // color: Colors.primary,
+  placeholderView: {
+    width: 40,
   },
-  label: {
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButtonTop: {
+    marginRight: 15,
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  imageContainer: {
+    height: 200,
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+  },
+  eventImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePlaceholderText: {
+    marginTop: 10,
     fontSize: 16,
-    fontWeight: "500",
-    marginTop: 16,
-    marginBottom: 5,
+    opacity: 0.7,
   },
-  textInputContainer: {
-    width: "100%",
+  formContainer: {
+    paddingHorizontal: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
   },
   textInput: {
-    height: 45,
-    padding: 10,
-    // backgroundColor: Colors.ligth,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#eee",
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#000',
   },
-  switchContainer: {
-    marginTop: 16,
+  textInputDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+  },
+  dateTimeButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+  },
+  dateTimeButtonDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dateTimeText: {
+    fontSize: 16,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  priceOption: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    marginRight: 10,
+    borderRadius: 12,
+  },
+  priceOptionSelected: {
+    backgroundColor: '#0c2a3f',
+  },
+  priceOptionSelectedDark: {
+    backgroundColor: '#1e3a5f',
+  },
+  priceOptionText: {
+    fontSize: 16,
+  },
+  priceOptionTextSelected: {
+    color: '#fff',
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  currencySymbol: {
+    width: 40,
+    height: 45,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+  },
+  currencyText: {
+    fontSize: 18,
+    fontWeight: '500',
+  },
+  priceInput: {
+    flex: 1,
+    height: 45,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    color: '#000',
+  },
+  priceInputDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
+  },
+  categoriesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  categoryChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  categoryChipSelected: {
+    backgroundColor: '#0c2a3f',
+  },
+  categoryChipSelectedDark: {
+    backgroundColor: '#1e3a5f',
+  },
+  categoryText: {
+    fontSize: 14,
+  },
+  categoryTextSelected: {
+    color: '#fff',
+  },
+  textArea: {
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    fontSize: 16,
+    minHeight: 120,
+    color: '#000',
+  },
+  textAreaDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
   },
   createGroupButton: {
-    // backgroundColor: '#007BFF',
-    padding: 6,
-    borderRadius: 10,
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0c2a3f',
+    borderRadius: 12,
+    paddingVertical: 15,
     marginTop: 10,
   },
   createGroupButtonText: {
-    // color: '#fff',
-    fontWeight: "bold",
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 10,
   },
-  modalContainer: {
+  createButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  createButton: {
+    backgroundColor: '#0c2a3f',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  createButtonDisabled: {
+    backgroundColor: 'rgba(12, 42, 63, 0.5)',
+  },
+  createButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  modalContent: {
-    // backgroundColor: '#fff',
-    borderRadius: 10,
+  imagePickerModal: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
     padding: 20,
-    width: "90%",
+  },
+  imagePickerModalDark: {
+    backgroundColor: '#1a1a1a',
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 20,
+    textAlign: 'center',
   },
-  userItem: {
-    padding: 10,
+  imagePickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  selectedUsersContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginVertical: 10,
+  imagePickerOptionText: {
+    fontSize: 16,
+    marginLeft: 15,
   },
-  selectedUserChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    // backgroundColor: '#333',
-    borderRadius: 15,
-    padding: 5,
-    margin: 5,
-  },
-  removeUser: {
-    marginLeft: 5,
-    color: "red",
-    fontWeight: "bold",
-  },
-  modalActions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  cancelButton: {
     marginTop: 20,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
-  noResultsText: {
-    textAlign: "center",
-    marginVertical: 10,
-    color: "#888",
+  cancelButtonText: {
+    fontSize: 16,
+    color: '#e74c3c',
+  },
+  groupModal: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+  },
+  groupModalDark: {
+    backgroundColor: '#1a1a1a',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  closeButton: {
+    padding: 5,
   },
   visibilityContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   visibilityOption: {
     flex: 1,
-    alignItems: "center",
-    // padding: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    marginHorizontal: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    marginRight: 10,
+    borderRadius: 12,
   },
-  // selectedOption: {
-  //   backgroundColor: '#007BFF',
-  //   borderColor: '#007BFF',
-  // },
-  optionText: {
-    color: "#fff",
+  visibilityOptionSelected: {
+    backgroundColor: '#0c2a3f',
   },
-  modalLabel: {
+  visibilityOptionSelectedDark: {
+    backgroundColor: '#1e3a5f',
+  },
+  visibilityText: {
     fontSize: 16,
-    fontWeight: "500",
-    marginVertical: 10,
+    marginLeft: 8,
+  },
+  visibilityTextSelected: {
+    color: '#fff',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+  },
+  searchContainerDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: 12,
+    marginLeft: 10,
+    fontSize: 16,
+  },
+  selectedUsersContainer: {
+    marginBottom: 15,
+  },
+  selectedUsersScroll: {
+    paddingVertical: 10,
+  },
+  selectedUserChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0c2a3f',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    marginRight: 10,
+  },
+  selectedUserName: {
+    color: '#fff',
+    marginLeft: 5,
+    marginRight: 5,
+    maxWidth: 100,
+  },
+  removeUserButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  userList: {
+    maxHeight: 200,
+  },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  userName: {
+    flex: 1,
+    fontSize: 16,
+  },
+  userSelectedIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#2ecc71',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyListText: {
+    textAlign: 'center',
+    padding: 20,
+    opacity: 0.6,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  cancelGroupButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderRadius: 12,
+    marginRight: 10,
+  },
+  cancelGroupText: {
+    fontSize: 16,
+  },
+  createGroupModalButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#0c2a3f',
+    borderRadius: 12,
+  },
+  createGroupModalButtonDisabled: {
+    backgroundColor: 'rgba(12, 42, 63, 0.5)',
+  },
+  createGroupModalText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

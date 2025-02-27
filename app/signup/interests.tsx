@@ -1,15 +1,22 @@
-import React, { useState } from "react";
-import { FlatList, TouchableOpacity, StyleSheet, Platform } from "react-native";
-import { useRouter } from "expo-router";
-import { useDispatch, useSelector } from "react-redux";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
+import React, { useState } from 'react';
+import { 
+  FlatList, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Platform,
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
+import { Check } from 'lucide-react';
 
-import ProgressBar from "@/components/ProgressBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { updateSignupData } from "@/redux/signupSlice";
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import SignupHeader from '@/components/SignupHeader';
+import NextButton from '@/components/NextButton';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { updateSignupData } from '@/redux/signupSlice';
 
 const interestsValues = [
   "Food & Drinks",
@@ -30,26 +37,25 @@ const interestsValues = [
 ];
 
 export default function Interests() {
-  const theme = useColorScheme() ?? "light";
+  const theme = useColorScheme() ?? 'light';
   const router = useRouter();
   const dispatch = useDispatch();
-  //   const onboardingData = useSelector((state) => state.onboarding);
 
-  const [selectedInterests, setSelectedInterests] = useState([]);
-  const isButtonActive = selectedInterests.length === 0;
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const isButtonDisabled = selectedInterests.length === 0;
 
-  const toggleSelection = (interestsValues) => {
-    if (selectedInterests.includes(interestsValues)) {
+  const toggleSelection = (interest: string) => {
+    if (selectedInterests.includes(interest)) {
       setSelectedInterests(
-        selectedInterests.filter((item) => item !== interestsValues)
+        selectedInterests.filter((item) => item !== interest)
       );
     } else {
-      setSelectedInterests([...selectedInterests, interestsValues]);
+      setSelectedInterests([...selectedInterests, interest]);
     }
   };
 
   const handleNext = () => {
-    if (isButtonActive) return;
+    if (isButtonDisabled) return;
 
     dispatch(
       updateSignupData({
@@ -57,55 +63,46 @@ export default function Interests() {
       })
     );
 
-    router.push("/signup/permission");
+    router.push('/signup/permission');
   };
 
-  const renderInterest = ({ item }) => {
+  const renderInterest = ({ item }: { item: string }) => {
     const isSelected = selectedInterests.includes(item);
+    const backgroundColor = isSelected ? '#0c2a3f' : 
+      theme === 'light' ? '#f0f5f8' : '#2c3e50';
+    const textColor = isSelected ? '#ffffff' : 
+      theme === 'light' ? '#0c2a3f' : '#f0f5f8';
 
     return (
       <TouchableOpacity
         style={[
           styles.interestButton,
-          (isSelected && styles.selectedButton) || {
-            borderColor:
-              theme === "light" ? Colors.light.icon : Colors.dark.icon,
-            backgroundColor:
-              theme === "light" ? Colors.light.icon : Colors.dark.icon,
-          },
+          { backgroundColor, borderColor: isSelected ? '#0c2a3f' : 'transparent' }
         ]}
         onPress={() => toggleSelection(item)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: isSelected }}
+        accessibilityLabel={`${item} interest category`}
       >
-        <ThemedText
-          style={[styles.interestText, isSelected && styles.selectedText]}
-        >
+        <ThemedText style={[styles.interestText, { color: textColor }]}>
           {item}
         </ThemedText>
+        {isSelected && (
+          <View style={styles.checkmark}>
+            <Check size={14} color="#fff" />
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedView style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
-        >
-          <Entypo
-            name="chevron-small-left"
-            size={45}
-            color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
-          />
-        </TouchableOpacity>
-        <ThemedText style={styles.headerText}>Finishing Up</ThemedText>
-      </ThemedView>
-
-      <ProgressBar progress={0.9} />
+      <SignupHeader title="Finishing Up" progress={0.9} />
 
       <ThemedView style={styles.content}>
-        <ThemedText type="title">Choose Your Interests</ThemedText>
-        <ThemedText type="info" style={{ marginBottom: 20 }}>
+        <ThemedText type="title" style={styles.title}>Choose Your Interests</ThemedText>
+        <ThemedText style={styles.subtitle}>
           Select areas you would like to explore
         </ThemedText>
 
@@ -116,27 +113,15 @@ export default function Interests() {
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
         />
-
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            {
-              backgroundColor: isButtonActive
-                ? Colors.dark.icon
-                : Colors.light.icon,
-            },
-
-            {
-              backgroundColor:
-                selectedInterests.length != 0 ? "#0c2a3f" : "#0c2a3f",
-            },
-          ]}
-          onPress={handleNext}
-        >
-          <FontAwesome name="chevron-right" size={24} color="#fff" />
-        </TouchableOpacity>
       </ThemedView>
+
+      <NextButton 
+        onPress={handleNext} 
+        disabled={isButtonDisabled} 
+        fullWidth={true} 
+      />
     </ThemedView>
   );
 }
@@ -144,82 +129,56 @@ export default function Interests() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: Colors.screen,
     paddingHorizontal: 20,
     paddingTop: 60,
   },
   content: {
     flex: 1,
     paddingBottom: 20,
-    marginBottom: 75,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 5,
-  },
-  titleHighlight: {
-    fontStyle: "italic",
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 17,
-    color: "#6e6e6e",
     marginBottom: 20,
+    opacity: 0.8,
   },
   listContainer: {
     paddingBottom: 20,
-    marginTop: 50,
+    marginTop: 20,
   },
   row: {
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
     marginBottom: 15,
   },
   interestButton: {
     flex: 1,
     borderRadius: 20,
     borderWidth: 1,
-    // borderColor: Colors.screen,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 15,
     marginHorizontal: 5,
-    // backgroundColor: Colors.ligth,
-    alignItems: "center",
-  },
-  selectedButton: {
-    backgroundColor: "#0c2a3f",
-    borderColor: "#0c2a3f",
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 50,
+    position: 'relative',
   },
   interestText: {
-    fontSize: 16,
-    color: "#fff",
+    fontSize: 14,
+    fontWeight: '500',
   },
-  selectedText: {
-    color: "#fff",
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    marginBottom: 50,
-  },
-  headerText: {
-    fontSize: 25,
-    fontWeight: "bold",
-    // color: Colors.primary,
-  },
-  backButton: {
-    position: "absolute",
-    left: -10,
-  },
-  nextButton: {
-    alignSelf: "center",
-    borderRadius: 50,
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
-    marginTop: 20,
-    // backgroundColor: '#0c2a3f'
+  checkmark: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#0c2a3f',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -1,7 +1,5 @@
-import { Stack, Link } from "expo-router";
 import React, { useState, useEffect } from "react";
 import {
-  View,
   StyleSheet,
   TouchableOpacity,
   KeyboardAvoidingView,
@@ -9,49 +7,54 @@ import {
   Keyboard,
   TouchableWithoutFeedback,
   Image,
-  Text,
   ActivityIndicator,
+  View,
+  Dimensions,
+  StatusBar,
 } from "react-native";
+import { Stack, Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import { useDispatch } from 'react-redux';
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { makeRedirectUri } from "expo-auth-session";
 import * as Google from "expo-auth-session/providers/google";
 import * as Facebook from "expo-auth-session/providers/facebook";
 import Constants from "expo-constants";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
+import { LinearGradient } from "expo-linear-gradient";
+import { ChevronLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 import { ThemedView } from "@/components/ThemedView";
 import { ThemedText } from "@/components/ThemedText";
-import LoginInput from "@/components/LoginInput";
-import SocialButton from "@/components/SocialButton";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
 import { loginUser } from "@/redux/authSlice";
 
 const { expoClientId, iosClientId, androidClientId, webClientId } =
-  Constants.expoConfig.extra;
-const { slug, owner } = Constants.expoConfig;
+  Constants.expoConfig?.extra || {};
+const { slug, owner } = Constants.expoConfig || {};
+
+const { height } = Dimensions.get("window");
 
 export default function Login() {
-  const [passwordVisible, setPasswordVisible] = useState(true);
+  // State
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
   const [emailError, setEmailError] = useState("");
-  const [credentials, setCredentials] = useState({ email: "", password: "" });
-
+  const [passwordError, setPasswordError] = useState("");
+  
+  // Hooks
   const theme = useColorScheme() ?? "light";
+  const isDark = theme === "dark";
   const { loading, error } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigation = useNavigation();
+  const router = useRouter();
 
+  // Auth configuration
   const redirectUri =
     Platform.OS === "web"
       ? window.location.origin
       : `https://auth.expo.io/@${owner}/${slug}`;
-
-  console.log("Redirect URI:", redirectUri);
-
-  console.log(slug, owner);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     expoClientId,
@@ -68,6 +71,7 @@ export default function Login() {
     scopes: ["public_profile", "email"],
   });
 
+  // Handle auth responses
   useEffect(() => {
     if (response?.type === "success") {
       const { authentication } = response;
@@ -82,270 +86,433 @@ export default function Login() {
     }
   }, [fbResponse]);
 
+  // Fetch user info after successful auth
   const fetchUserInfo = async (token, provider) => {
     let userInfo;
-    if (provider === "google") {
-      const response = await fetch(
-        "https://www.googleapis.com/userinfo/v2/me",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      console.log(response?.error);
-      userInfo = await response.json();
-    } else if (provider === "facebook") {
-      const response = await fetch(
-        `https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,bio&access_token=${token}`
-      );
-      userInfo = await response.json();
-    }
-    saveToken(token);
-    console.log(userInfo);
-  };
-
-  const saveToken = async (value: string) => {
     try {
-      await AsyncStorage.setItem("@token", value);
-      console.log("Token saved");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleLogin = async (): Promise<void> => {
-    const response = await dispatch(
-      loginUser({ email: credentials.email, password: credentials.password })
-    );
-    if (response.payload?.success) {
+      if (provider === "google") {
+        const response = await fetch(
+          "https://www.googleapis.com/userinfo/v2/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        userInfo = await response.json();
+      } else if (provider === "facebook") {
+        const response = await fetch(
+          `https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,bio&access_token=${token}`
+        );
+        userInfo = await response.json();
+      }
+      
+      await saveToken(token);
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
           routes: [{ name: "(tabs)" }],
         })
       );
+    } catch (error) {
+      console.error("Error fetching user info:", error);
     }
   };
 
-  const handleGoogleLogin = () => {
-    promptAsync();
+  // Save auth token
+  const saveToken = async (value) => {
+    try {
+      await AsyncStorage.setItem("@token", value);
+    } catch (error) {
+      console.error("Error saving token:", error);
+    }
   };
 
-  const handleFacebookLogin = () => {
-    fbPromptAsync();
+  // Validate email format
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Form validation
+  const validateForm = () => {
+    let isValid = true;
+    
+    // Email validation
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Please enter a valid email address");
+      isValid = false;
+    } else {
+      setEmailError("");
+    }
+    
+    // Password validation
+    if (!password) {
+      setPasswordError("Password is required");
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      isValid = false;
+    } else {
+      setPasswordError("");
+    }
+    
+    return isValid;
+  };
+
+  // Handle login
+  const handleLogin = async () => {
+    if (!validateForm()) return;
+    
+    try {
+      const response = await dispatch(
+        loginUser({ email, password })
+      );
+      
+      if (response.payload?.success) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "(tabs)" }],
+          })
+        );
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
 
   return (
-    <>
-      <Stack.Screen options={{ title: "Login" }} />
-      <ThemedView style={styles.container}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : undefined}
-            style={styles.innerContainer}
-          >
+    <ThemedView style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      <Stack.Screen options={{ 
+        headerShown: false,
+        animation: 'slide_from_right'
+      }} />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
+        </TouchableOpacity>
+        <ThemedText style={styles.headerTitle}>Sign In</ThemedText>
+        <View style={styles.headerRight} />
+      </View>
+      
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.keyboardAvoidingView}
+        >
+          <View style={styles.contentContainer}>
+            {/* Welcome Text */}
+            <View style={styles.welcomeContainer}>
+              <ThemedText style={styles.welcomeTitle}>Welcome Back</ThemedText>
+              <ThemedText style={styles.welcomeSubtitle}>
+                Sign in to continue to your account
+              </ThemedText>
+            </View>
+            
+            {/* Login Form */}
             <View style={styles.formContainer}>
-              <LoginInput
-                iconName="user"
-                placeholder="Email"
-                value={credentials.email}
-                onChangeText={(val) =>
-                  setCredentials({ ...credentials, email: val })
-                }
-                keyboardType="email-address"
-              />
-
-              <LoginInput
-                iconName="lock"
-                placeholder="Password"
-                value={credentials.password}
-                onChangeText={(val) =>
-                  setCredentials({ ...credentials, password: val })
-                }
-                secureTextEntry={passwordVisible}
-                onToggleVisibility={() => setPasswordVisible((prev) => !prev)}
-              />
-
+              {/* Email Input */}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Mail size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                </View>
+                <View style={styles.textInputWrapper}>
+                  <ThemedText style={styles.inputLabel}>Email</ThemedText>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className={`w-full bg-transparent outline-none text-base ${isDark ? 'text-white placeholder-gray-400' : 'text-gray-800 placeholder-gray-500'}`}
+                  />
+                </View>
+              </View>
               {emailError ? (
-                <ThemedText type="error" style={styles.errorText}>
-                  {emailError}
-                </ThemedText>
+                <ThemedText style={styles.errorText}>{emailError}</ThemedText>
               ) : null}
-
-              <TouchableOpacity
-                style={{ alignSelf: "flex-end" }}
-                onPress={() => console.log("forget Password")}
-              >
-                <ThemedText style={styles.forgotPassword}>
+              
+              {/* Password Input */}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Lock size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                </View>
+                <View style={styles.textInputWrapper}>
+                  <ThemedText style={styles.inputLabel}>Password</ThemedText>
+                  <input
+                    type={passwordVisible ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className={`w-full bg-transparent outline-none text-base ${isDark ? 'text-white placeholder-gray-400' : 'text-gray-800 placeholder-gray-500'}`}
+                  />
+                </View>
+                <TouchableOpacity 
+                  style={styles.visibilityToggle}
+                  onPress={() => setPasswordVisible(!passwordVisible)}
+                >
+                  {passwordVisible ? (
+                    <EyeOff size={20} color={isDark ? "#8da9bc" : "#666"} />
+                  ) : (
+                    <Eye size={20} color={isDark ? "#8da9bc" : "#666"} />
+                  )}
+                </TouchableOpacity>
+              </View>
+              {passwordError ? (
+                <ThemedText style={styles.errorText}>{passwordError}</ThemedText>
+              ) : null}
+              
+              {/* Forgot Password */}
+              <TouchableOpacity style={styles.forgotPasswordContainer}>
+                <ThemedText style={styles.forgotPasswordText}>
                   Forgot Password?
                 </ThemedText>
               </TouchableOpacity>
-
-              {loading && <ActivityIndicator size="large" />}
-              {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-
-              <TouchableOpacity onPress={handleLogin} style={styles.primaryBtn}>
-                <ThemedText
-                  type="button"
-                  style={[styles.primaryBtnText, { color: "white" }]}
-                >
-                  Sign In
-                </ThemedText>
+              
+              {/* Error Message */}
+              {error && (
+                <View style={styles.errorContainer}>
+                  <ThemedText style={styles.errorMessage}>{error}</ThemedText>
+                </View>
+              )}
+              
+              {/* Login Button */}
+              <TouchableOpacity 
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText style={styles.loginButtonText}>Sign In</ThemedText>
+                )}
               </TouchableOpacity>
-
+              
+              {/* Social Login Divider */}
               <View style={styles.divider}>
-                <View style={styles.line} />
-                <ThemedText type="info" style={styles.orText}>
-                  Or
-                </ThemedText>
-                <View style={styles.line} />
+                <View style={styles.dividerLine} />
+                <ThemedText style={styles.dividerText}>or continue with</ThemedText>
+                <View style={styles.dividerLine} />
               </View>
-
-              <View style={{ flexDirection: "row", gap: 10 }}>
-                <SocialButton
-                  icon={
-                    <Image
-                      source={require("@/assets/images/googleLogo.png")}
-                      style={styles.socialIcon}
-                    />
-                  }
-                  label="Google"
-                  style={[
-                    styles.googleButton,
-                    {
-                      borderColor:
-                        theme === "light"
-                          ? Colors.light.icon
-                          : Colors.dark.icon,
-                    },
-                  ]}
-                  onPress={handleGoogleLogin}
-                />
-                <SocialButton
-                  icon={
-                    <FontAwesome5
-                      name="facebook-f"
-                      size={24}
-                      color={
-                        theme === "light" ? Colors.light.icon : Colors.dark.icon
-                      }
-                      style={styles.socialIcon}
-                    />
-                  }
-                  label="Facebook"
-                  style={[
-                    styles.facebookButton,
-                    {
-                      borderColor:
-                        theme === "light"
-                          ? Colors.light.icon
-                          : Colors.dark.icon,
-                    },
-                  ]}
-                  onPress={handleFacebookLogin}
-                />
-              </View>
-
-              <View style={styles.signupContainer}>
-                <ThemedText style={styles.signupText}>
-                  Signup with email
-                </ThemedText>
-                <Link href="/signup" style={styles.signupLink}>
-                  <ThemedText>Here</ThemedText>
-                </Link>
+              
+              {/* Social Login Buttons */}
+              <View style={styles.socialButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.socialButton}
+                  onPress={() => promptAsync()}
+                >
+                  <Image 
+                    source={require("@/assets/images/googleLogo.png")} 
+                    style={styles.socialIcon} 
+                  />
+                  <ThemedText style={styles.socialButtonText}>Google</ThemedText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.socialButton}
+                  onPress={() => fbPromptAsync()}
+                >
+                  <Image 
+                    source={{ uri: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/800px-2021_Facebook_icon.svg.png" }} 
+                    style={styles.socialIcon} 
+                  />
+                  <ThemedText style={styles.socialButtonText}>Facebook</ThemedText>
+                </TouchableOpacity>
               </View>
             </View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
-      </ThemedView>
-    </>
+            
+            {/* Sign Up Link */}
+            <View style={styles.signupContainer}>
+              <ThemedText style={styles.signupText}>
+                Don't have an account?
+              </ThemedText>
+              <Link href="/signup" asChild>
+                <TouchableOpacity>
+                  <ThemedText style={styles.signupLink}>Sign Up</ThemedText>
+                </TouchableOpacity>
+              </Link>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableWithoutFeedback>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    // backgroundColor: '#faf0e6',
   },
-  innerContainer: {
-    width: "100%",
-    alignItems: "center",
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingBottom: 10,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  headerRight: {
+    width: 40,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  contentContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: 'space-between',
+  },
+  welcomeContainer: {
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    opacity: 0.7,
   },
   formContainer: {
-    width: "80%",
-    alignItems: "center",
-    backgroundColor: "none",
+    width: '100%',
   },
-  forgotPassword: {
-    // color: '#0c2a3f',
-    fontWeight: "500",
-    marginBottom: 20,
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  signupContainer: {
-    flexDirection: "row",
-    marginTop: 20,
+  inputIconContainer: {
+    marginRight: 12,
   },
-  signupText: {
-    // color: '#666',
-  },
-  signupLink: {
-    // color: '#0c2a3f',
-    fontWeight: "bold",
-    textDecorationLine: "underline",
-    marginLeft: 5,
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    marginVertical: 20,
-  },
-  line: {
+  textInputWrapper: {
     flex: 1,
-    height: 1,
-    backgroundColor: "#ddd",
   },
-  orText: {
-    marginHorizontal: 10,
-    // color: '#888',
+  inputLabel: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginBottom: 4,
+  },
+  visibilityToggle: {
+    padding: 8,
   },
   errorText: {
-    color: "red",
-    textAlign: "center",
-    marginBottom: 10,
+    color: '#e74c3c',
+    fontSize: 14,
+    marginTop: -8,
+    marginBottom: 16,
+    marginLeft: 8,
+  },
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorMessage: {
+    color: '#e74c3c',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  loginButton: {
+    backgroundColor: '#0c2a3f',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  loginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(140, 140, 140, 0.2)',
+  },
+  dividerText: {
+    marginHorizontal: 16,
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  socialButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  socialButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    width: '48%',
   },
   socialIcon: {
     width: 24,
     height: 24,
-    marginRight: 15,
+    marginRight: 8,
   },
-  googleButton: {
-    // backgroundColor: '#faf0e6',
-    borderWidth: 1,
-    // borderColor: '#eee',
+  socialButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
-  facebookButton: {
-    // backgroundColor: '#faf0e6',
-    borderWidth: 1,
-    // borderColor: '#eee',
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 'auto',
+    marginBottom: Platform.OS === 'ios' ? 40 : 24,
   },
-  primaryBtn: {
-    width: "100%",
-    backgroundColor: "#0c2a3f",
-    padding: 10,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    textAlign: "center",
+  signupText: {
+    fontSize: 14,
+    opacity: 0.7,
   },
-  primaryBtnText: {
-    // color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
+  signupLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0c2a3f',
+    marginLeft: 4,
   },
 });

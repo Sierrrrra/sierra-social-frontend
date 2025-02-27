@@ -1,25 +1,25 @@
+import React, { useState } from 'react';
 import {
   TouchableOpacity,
-  KeyboardAvoidingView,
+  StyleSheet,
   Platform,
   Alert,
-  StyleSheet,
   ActivityIndicator,
-} from "react-native";
-import { useRouter } from "expo-router";
-import { CommonActions, useNavigation } from "@react-navigation/native";
-import { useSelector, useDispatch } from "react-redux";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
-import { useState } from "react";
-import * as Location from "expo-location";
-import * as Notifications from "expo-notifications";
+  View,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { CommonActions, useNavigation } from '@react-navigation/native';
+import { useSelector, useDispatch } from 'react-redux';
+import { Shield, Bell } from 'lucide-react';
+import * as Location from 'expo-location';
+import * as Notifications from 'expo-notifications';
 
-import ProgressBar from "@/components/ProgressBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { signupUser } from "@/redux/authSlice";
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import SignupHeader from '@/components/SignupHeader';
+import NextButton from '@/components/NextButton';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { signupUser } from '@/redux/authSlice';
 
 export default function UserPermissionScreen() {
   const router = useRouter();
@@ -27,7 +27,7 @@ export default function UserPermissionScreen() {
   const { loading, error } = useSelector((state) => state.auth);
   const signupData = useSelector((state) => state.signup);
   const dispatch = useDispatch();
-  const theme = useColorScheme() ?? "light";
+  const theme = useColorScheme() ?? 'light';
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [notificationsGranted, setNotificationsGranted] = useState(false);
@@ -35,145 +35,136 @@ export default function UserPermissionScreen() {
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted") {
+      if (status === 'granted') {
         setLocationGranted(true);
-        // Alert.alert("Success", "Location access granted!");
       } else {
         Alert.alert(
-          "Permission Denied",
-          "Location access is required for this feature."
+          'Location Access',
+          'Location access helps us show you events and people nearby. You can change this later in settings.',
+          [
+            { text: 'OK', style: 'default' }
+          ]
         );
       }
     } catch (error) {
-      console.error("Error requesting location permission:", error);
+      console.error('Error requesting location permission:', error);
     }
   };
 
   const requestNotificationPermission = async () => {
     try {
       const { status } = await Notifications.requestPermissionsAsync();
-      if (status === "granted") {
+      if (status === 'granted') {
         setNotificationsGranted(true);
-        // Alert.alert("Success", "Notifications enabled!");
       } else {
         Alert.alert(
-          "Permission Denied",
-          "Notification access is required for this feature."
+          'Notifications',
+          'Notifications help you stay updated on new events and messages. You can change this later in settings.',
+          [
+            { text: 'OK', style: 'default' }
+          ]
         );
       }
     } catch (error) {
-      console.error("Error requesting notification permission:", error);
+      console.error('Error requesting notification permission:', error);
     }
   };
 
   const handleNext = async () => {
     if (!locationGranted || !notificationsGranted) {
       Alert.alert(
-        "Permissions Required",
-        "Please enable location and notification permissions to continue."
+        'Permissions Required',
+        'Please enable both location and notification permissions to continue.',
+        [
+          { text: 'OK', style: 'default' }
+        ]
       );
       return;
     }
 
-    const response = await dispatch(signupUser(signupData));
-
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{ name: "(tabs)" }],
-      })
-    );
-
-    // if (response.payload?.success) {
-    //   navigation.dispatch(
-    //     CommonActions.reset({
-    //       index: 0,
-    //       routes: [{ name: '(tabs)' }],
-    //     })
-    //   );
-    // }
+    try {
+      await dispatch(signupUser(signupData));
+      
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: '(tabs)' }],
+        })
+      );
+    } catch (err) {
+      console.error('Signup error:', err);
+    }
   };
 
   return (
-    <ThemedView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-    >
+    <ThemedView style={styles.container}>
+      <SignupHeader title="Finishing Up" progress={1} />
+
       <ThemedView style={styles.content}>
-        <ThemedView>
-          <ThemedView style={styles.headerContainer}>
-            {/* Back Button */}
+        <ThemedText type="title" style={styles.title}>Set Permissions</ThemedText>
+        <ThemedText style={styles.subtitle}>
+          We need a few permissions to provide you with the best experience
+        </ThemedText>
+
+        <View style={styles.permissionsContainer}>
+          <View style={styles.permissionCard}>
+            <View style={styles.iconContainer}>
+              <Shield size={24} color="#0c2a3f" />
+            </View>
+            <ThemedText style={styles.permissionTitle}>Location Services</ThemedText>
+            <ThemedText style={styles.permissionDescription}>
+              We use your location to ensure you see hangouts and other users in your area.
+            </ThemedText>
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
+              style={[
+                styles.permissionButton,
+                locationGranted && styles.permissionGrantedButton
+              ]}
+              onPress={requestLocationPermission}
             >
-              <Entypo
-                name="chevron-small-left"
-                size={45}
-                color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
-              />
+              <ThemedText style={styles.buttonText}>
+                {locationGranted ? 'Location Access Granted' : 'Allow Location Services'}
+              </ThemedText>
             </TouchableOpacity>
-            <ThemedText style={styles.headerText}>Finishing Up</ThemedText>
-          </ThemedView>
+          </View>
 
-          {/* ProgressBar */}
-          <ProgressBar progress={1} />
-
-          <ThemedText type="title">Set some permissions</ThemedText>
-
-          <ThemedText type="info">
-            We use your location to ensure you see hangouts and other users in
-            your area.
-          </ThemedText>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              locationGranted && { backgroundColor: "#0c2a3f" },
-            ]}
-            onPress={requestLocationPermission}
-          >
-            <ThemedText style={styles.buttonText}>
-              {locationGranted
-                ? "Location Access Granted"
-                : "Allow Location Services"}
+          <View style={styles.permissionCard}>
+            <View style={styles.iconContainer}>
+              <Bell size={24} color="#0c2a3f" />
+            </View>
+            <ThemedText style={styles.permissionTitle}>Notifications</ThemedText>
+            <ThemedText style={styles.permissionDescription}>
+              Enable notifications to get updated about new hangouts, messages, and other activity.
             </ThemedText>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.permissionButton,
+                notificationsGranted && styles.permissionGrantedButton
+              ]}
+              onPress={requestNotificationPermission}
+            >
+              <ThemedText style={styles.buttonText}>
+                {notificationsGranted ? 'Notifications Enabled' : 'Enable Notifications'}
+              </ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-          <ThemedText style={[styles.description, { marginTop: 50 }]}>
-            Enable notifications to get updated about new hangouts, messages,
-            and other activity.
-          </ThemedText>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              notificationsGranted && { backgroundColor: "#0c2a3f" },
-            ]}
-            onPress={requestNotificationPermission}
-          >
-            <ThemedText style={styles.buttonText}>
-              {notificationsGranted
-                ? "Notifications Enabled"
-                : "Enable Notifications"}
-            </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-
-        {loading && <ActivityIndicator size="large" />}
-        {error && <ThemedText style={styles.error}>{error}</ThemedText>}
-
-        {/* Next Button */}
-        <TouchableOpacity
-          style={[
-            styles.nextButton,
-            {
-              backgroundColor: "#0c2a3f",
-            },
-          ]}
-          onPress={handleNext}
-        >
-          <FontAwesome name="chevron-right" size={24} color="#fff" />
-        </TouchableOpacity>
+        {error && <ThemedText style={styles.errorText}>{error}</ThemedText>}
       </ThemedView>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0c2a3f" />
+          <ThemedText style={styles.loadingText}>Creating your account...</ThemedText>
+        </View>
+      ) : (
+        <NextButton 
+          onPress={handleNext} 
+          disabled={!locationGranted || !notificationsGranted} 
+          fullWidth={true} 
+        />
+      )}
     </ThemedView>
   );
 }
@@ -181,68 +172,86 @@ export default function UserPermissionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 45,
+    paddingHorizontal: 20,
+    paddingTop: 60,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    justifyContent: "space-between",
+    paddingBottom: 20,
   },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 20,
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
   },
-  italicText: {
-    fontStyle: "italic",
+  subtitle: {
+    fontSize: 17,
+    marginBottom: 30,
+    opacity: 0.8,
   },
-  description: {
-    fontSize: 16,
-    //   color: "#6c6c6c",
-    textAlign: "center",
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: "#0c2a3f",
-    paddingVertical: 15,
-    borderRadius: 10,
+  permissionsContainer: {
     marginTop: 10,
   },
+  permissionCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#e9f0f8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  permissionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  permissionDescription: {
+    fontSize: 15,
+    marginBottom: 15,
+    opacity: 0.8,
+    lineHeight: 22,
+  },
+  permissionButton: {
+    backgroundColor: '#0c2a3f',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 5,
+    opacity: 0.8,
+  },
+  permissionGrantedButton: {
+    backgroundColor: '#2ecc71',
+    opacity: 1,
+  },
   buttonText: {
-    color: "#fff",
-    textAlign: "center",
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  errorText: {
+    color: '#e74c3c',
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 15,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
-    fontWeight: "600",
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 20 : 20,
-    marginBottom: 50,
-  },
-  headerText: {
-    fontSize: 25,
-    fontWeight: "bold",
-    //   color: Colors.primary,
-  },
-  backButton: {
-    position: "absolute",
-    left: -10,
-  },
-  nextButton: {
-    alignSelf: "center",
-    borderRadius: 50,
-    padding: 15,
-    alignItems: "center",
-    justifyContent: "center",
-    width: "90%",
-  },
-  error: {
-    color: "red",
-    marginBottom: 10,
-    alignSelf: "center",
   },
 });

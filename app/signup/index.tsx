@@ -1,118 +1,81 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-} from "react-native";
-import { Stack, Link, useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
-// import { updateOnboardingData } from '@/features/onboarding/onboardingSlice';
-import Input from "@/components/Input";
-import ProgressBar from "@/components/ProgressBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { updateSignupData } from "@/redux/signupSlice";
+} from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
+
+import Input from '@/components/Input';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import SignupHeader from '@/components/SignupHeader';
+import NextButton from '@/components/NextButton';
+import { updateSignupData } from '@/redux/signupSlice';
 
 export default function Signup() {
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const dispatch = useDispatch();
-
-  const isButtonActive = !firstName || !lastName;
-
-  const theme = useColorScheme() ?? "light";
   const router = useRouter();
 
+  const isButtonDisabled = !firstName.trim() || !lastName.trim();
+
   const handleNext = () => {
-    if (isButtonActive) return;
+    if (isButtonDisabled) return;
+    
     dispatch(
       updateSignupData({
-        firstName: firstName,
-        lastName: lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
       })
     );
 
-    // dispatch(updateOnboardingData({ fullName: `${firstName} ${lastName}` }));
-    // // Navigate to the Email screen
-    router.push("/signup/email");
+    router.push('/signup/email');
   };
 
   return (
-    <ThemedView style={[styles.container]}>
+    <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "undefined"}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>
-            {/* Header */}
             <ThemedView>
-              <ThemedView style={styles.headerContainer}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Entypo
-                    name="chevron-small-left"
-                    size={45}
-                    color={
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon
-                    }
-                  />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerText}>
-                  Get To Know You
-                </ThemedText>
-              </ThemedView>
+              <SignupHeader title="Get To Know You" progress={0.3} />
 
-              {/* ProgressBar */}
-              <ProgressBar progress={0.3} />
-
-              {/* Title and Subtitle */}
-              <ThemedText type="title">What's your name?</ThemedText>
-              <ThemedText style={[styles.subtitle]}>
+              <ThemedText type="title" style={styles.title}>What's your name?</ThemedText>
+              <ThemedText style={styles.subtitle}>
                 To continue, enter your full name
               </ThemedText>
 
-              {/* Input Fields */}
               <ThemedView style={styles.inputContainer}>
                 <Input
                   label="First name"
                   value={firstName}
                   onChangeText={setFirstName}
+                  autoFocus
+                  autoCapitalize="words"
+                  returnKeyType="next"
                 />
                 <Input
                   label="Last name"
                   value={lastName}
                   onChangeText={setLastName}
+                  autoCapitalize="words"
+                  returnKeyType="done"
+                  onSubmitEditing={handleNext}
                 />
               </ThemedView>
             </ThemedView>
 
-            {/* Next Button */}
-            <TouchableOpacity
-              style={[
-                styles.nextButton,
-                {
-                  backgroundColor:
-                    isButtonActive && theme === "light"
-                      ? Colors.dark.icon
-                      : isButtonActive && theme === "dark"
-                      ? Colors.dark.icon
-                      : "black",
-                },
-              ]}
-              onPress={handleNext}
-            >
-              <FontAwesome name="chevron-right" size={28} color="#fff" />
-            </TouchableOpacity>
+            <NextButton onPress={handleNext} disabled={isButtonDisabled} />
           </ThemedView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -123,55 +86,24 @@ export default function Signup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: Colors.screen,
     paddingTop: 30,
   },
   inner: {
     flex: 1,
     paddingHorizontal: 20,
-    // paddingVertical: 10,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 5,
-    marginTop: "20%",
-  },
-  titleHighlight: {
-    fontStyle: "italic",
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 17,
-    // color: '#6e6e6e',
     marginBottom: 20,
+    opacity: 0.8,
   },
   inputContainer: {
     marginTop: 10,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    marginBottom: 50,
-  },
-  headerText: {
-    fontSize: 25,
-    fontWeight: "bold",
-    // color: Colors.primary,
-  },
-  backButton: {
-    position: "absolute",
-    left: -10,
-  },
-  nextButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 40,
-    alignSelf: "flex-end",
   },
 });

@@ -1,54 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert,
-} from "react-native";
-import { Stack, Link, useRouter } from "expo-router";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
-import { useDispatch } from "react-redux";
+  View,
+} from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 
-import Input from "@/components/Input";
-import ProgressBar from "@/components/ProgressBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { updateSignupData } from "@/redux/signupSlice";
+import Input from '@/components/Input';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import SignupHeader from '@/components/SignupHeader';
+import NextButton from '@/components/NextButton';
+import { updateSignupData } from '@/redux/signupSlice';
+import { Check, X } from 'lucide-react';
 
 export default function Password() {
-  const [password, setPassword] = useState("");
-  const [rePassword, setRePassword] = useState("");
-  const [error, setError] = useState("");
-
-  const theme = useColorScheme() ?? "light";
-  const router = useRouter();
+  const [password, setPassword] = useState('');
+  const [rePassword, setRePassword] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState({
+    length: true,
+    uppercase: true,
+    number: true,
+    special: true,
+    match: false,
+  });
+  
   const dispatch = useDispatch();
+  const router = useRouter();
 
-  const validatePassword = () => {
-    const passwordRegex =
-      /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  useEffect(() => {
+    validatePassword(password, rePassword);
+  }, [password, rePassword]);
 
-    if (!passwordRegex.test(password)) {
-      setError(
-        "Password must be at least 8 characters long, include an uppercase letter, a number, and a special character."
-      );
-      return false;
-    }
-    if (password !== rePassword) {
-      setError("Passwords do not match.");
-      return false;
-    }
-    setError("");
-    return true;
+  const validatePassword = (pass: string, confirmPass: string) => {
+    const hasLength = pass.length >= 8;
+    const hasUppercase = /[A-Z]/.test(pass);
+    const hasNumber = /\d/.test(pass);
+    const hasSpecial = /[@$!%*?&]/.test(pass);
+    const doPasswordsMatch = pass === confirmPass && pass !== '';
+
+    setPasswordErrors({
+      length: !hasLength,
+      uppercase: !hasUppercase,
+      number: !hasNumber,
+      special: !hasSpecial,
+      match: !doPasswordsMatch && confirmPass !== '',
+    });
+
+    return hasLength && hasUppercase && hasNumber && hasSpecial && doPasswordsMatch;
   };
 
+  const isButtonDisabled = !password || !rePassword || 
+    Object.values(passwordErrors).some(error => error === true);
+
   const handleNext = () => {
-    if (!validatePassword()) return;
+    if (isButtonDisabled) return;
 
     dispatch(
       updateSignupData({
@@ -56,82 +66,86 @@ export default function Password() {
       })
     );
 
-    router.push("/signup/interests");
+    router.push('/signup/interests');
   };
 
+  const ValidationItem = ({ isError, text }: { isError: boolean; text: string }) => (
+    <View style={styles.validationItem}>
+      {isError ? (
+        <X size={16} color="#e74c3c" />
+      ) : (
+        <Check size={16} color="#2ecc71" />
+      )}
+      <ThemedText style={[styles.validationText, isError ? styles.errorText : styles.successText]}>
+        {text}
+      </ThemedText>
+    </View>
+  );
+
   return (
-    <ThemedView style={[styles.container]}>
+    <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "undefined"}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>
-            {/* Header */}
             <ThemedView>
-              <ThemedView style={styles.headerContainer}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Entypo
-                    name="chevron-small-left"
-                    size={45}
-                    color={
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon
-                    }
-                  />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerText}>
-                  Get To Know You
-                </ThemedText>
-              </ThemedView>
+              <SignupHeader title="Get To Know You" progress={0.7} />
 
-              {/* ProgressBar */}
-              <ProgressBar progress={0.7} />
-
-              {/* Title and Subtitle */}
-              <ThemedText type="title">Choose a password</ThemedText>
-              <ThemedText style={[styles.subtitle]}>
-                To continue, choose a password
+              <ThemedText type="title" style={styles.title}>Choose a password</ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Create a secure password for your account
               </ThemedText>
 
-              {/* Input Fields */}
               <ThemedView style={styles.inputContainer}>
                 <Input
                   label="Enter Password"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry
+                  autoFocus
+                  returnKeyType="next"
                 />
                 <Input
                   label="Re-enter Password"
                   value={rePassword}
                   onChangeText={setRePassword}
                   secureTextEntry
+                  returnKeyType="done"
+                  onSubmitEditing={handleNext}
                 />
-                {error ? (
-                  <ThemedText type="info" style={styles.errorText}>
-                    {error}
-                  </ThemedText>
-                ) : null}
+                
+                <ThemedView style={styles.validationContainer}>
+                  <ValidationItem 
+                    isError={passwordErrors.length} 
+                    text="At least 8 characters" 
+                  />
+                  <ValidationItem 
+                    isError={passwordErrors.uppercase} 
+                    text="At least 1 uppercase letter" 
+                  />
+                  <ValidationItem 
+                    isError={passwordErrors.number} 
+                    text="At least 1 number" 
+                  />
+                  <ValidationItem 
+                    isError={passwordErrors.special} 
+                    text="At least 1 special character (@$!%*?&)" 
+                  />
+                  {rePassword && (
+                    <ValidationItem 
+                      isError={passwordErrors.match} 
+                      text="Passwords match" 
+                    />
+                  )}
+                </ThemedView>
               </ThemedView>
             </ThemedView>
 
-            {/* Next Button */}
-            <TouchableOpacity
-              style={[
-                styles.nextButton,
-                {
-                  backgroundColor:
-                    !password || !rePassword ? Colors.dark.icon : "black",
-                },
-              ]}
-              onPress={handleNext}
-            >
-              <FontAwesome name="chevron-right" size={28} color="#fff" />
-            </TouchableOpacity>
+            <NextButton onPress={handleNext} disabled={isButtonDisabled} />
           </ThemedView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -147,42 +161,38 @@ const styles = StyleSheet.create({
   inner: {
     flex: 1,
     paddingHorizontal: 20,
-    // paddingVertical: 10,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 17,
     marginBottom: 20,
+    opacity: 0.8,
   },
   inputContainer: {
     marginTop: 10,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    marginBottom: 50,
+  validationContainer: {
+    marginTop: 20,
+    marginBottom: 10,
   },
-  headerText: {
-    fontSize: 25,
-    fontWeight: "bold",
+  validationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  backButton: {
-    position: "absolute",
-    left: -10,
-  },
-  nextButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 40,
-    alignSelf: "flex-end",
+  validationText: {
+    marginLeft: 8,
+    fontSize: 14,
   },
   errorText: {
-    color: "red",
-    marginTop: 10,
+    color: '#e74c3c',
+  },
+  successText: {
+    color: '#2ecc71',
   },
 });

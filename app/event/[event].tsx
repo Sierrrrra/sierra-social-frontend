@@ -1,6 +1,6 @@
 import { parse } from "date-fns";
 import * as Linking from "expo-linking";
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import {
   StyleSheet,
   Image,
@@ -8,26 +8,42 @@ import {
   Share,
   TouchableOpacity,
   Alert,
+  View,
+  ScrollView,
+  Animated,
 } from "react-native";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
 import MapView, { Marker } from "react-native-maps";
-import { Entypo, Ionicons } from "@expo/vector-icons";
 import * as Calendar from "expo-calendar";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 
-import Btn from "@/components/Btn";
-import { Collapsible } from "@/components/Collapsible";
-import { ExternalLink } from "@/components/ExternalLink";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { 
+  Calendar as CalendarIcon, 
+  Clock, 
+  MapPin, 
+  Users, 
+  Share as ShareIcon, 
+  ChevronLeft, 
+  Info, 
+  Heart, 
+  MessageCircle,
+  Navigation
+} from "lucide-react";
 
-export default function TabTwoScreen() {
+export default function EventDetailScreen() {
   const navigation = useNavigation();
   const theme = useColorScheme() ?? "light";
   const router = useRouter();
+  const isDark = theme === "dark";
+  
+  const [isLiked, setIsLiked] = useState(false);
+  const [attendeeCount, setAttendeeCount] = useState(12);
+  const [scrollY] = useState(new Animated.Value(0));
 
   const { event, data } = useGlobalSearchParams();
   const eventObject = data ? JSON.parse(data) : null;
@@ -37,39 +53,6 @@ export default function TabTwoScreen() {
       headerShown: false,
     });
   }, [navigation]);
-
-  // const handleShare = async () => {
-  //   const eventLink = Linking.createURL(`/event/${eventObject.id}`, {
-  //     queryParams: {
-  //       title: eventObject.title,
-  //       date: eventObject.date,
-  //       time: eventObject.time,
-  //       location: eventObject.location,
-  //     },
-  //   });
-
-  //   console.log("Generated event link:", eventLink);
-
-  //   try {
-  //     const result = await Share.share({
-  //       title: `Check out this event: ${eventObject.title}`,
-  //       message: `Join me at this event:\n\n${eventObject.title}\nDate: ${eventObject.date}\nTime: ${eventObject.time}\nLocation: ${eventObject.location}\n\nAccess the event here: ${eventLink}`,
-  //       url: eventLink, // Important for some platforms like iOS
-  //     });
-
-  //     if (result.action === Share.sharedAction) {
-  //       if (result.activityType) {
-  //         console.log("Shared with activity type:", result.activityType);
-  //       } else {
-  //         console.log("Shared successfully!");
-  //       }
-  //     } else if (result.action === Share.dismissedAction) {
-  //       console.log("Share dismissed");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error sharing event:", error.message);
-  //   }
-  // };
 
   const handleShare = async () => {
     const eventLink = `sierra://event/${eventObject.id}`; // Deep link to your app's event screen
@@ -146,6 +129,16 @@ export default function TabTwoScreen() {
       });
 
       console.log("Event creation interface opened in calendar");
+      
+      // Update attendee count
+      setAttendeeCount(attendeeCount + 1);
+      
+      // Show success message
+      Alert.alert(
+        "Success",
+        "Event added to your calendar! You're now attending this event.",
+        [{ text: "Great!" }]
+      );
     } catch (error) {
       console.error("Error handling calendar event:", error.message);
       Alert.alert(
@@ -154,120 +147,446 @@ export default function TabTwoScreen() {
       );
     }
   };
+  
+  const handleLike = () => {
+    setIsLiked(!isLiked);
+  };
+  
+  const handleGetDirections = () => {
+    const url = Platform.select({
+      ios: `maps:0,0?q=${eventObject.location}`,
+      android: `geo:0,0?q=${eventObject.location}`
+    });
+    
+    Linking.openURL(url);
+  };
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 200],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+  
+  const imageScale = scrollY.interpolate({
+    inputRange: [-100, 0],
+    outputRange: [1.2, 1],
+    extrapolate: 'clamp',
+  });
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/event.jpeg")}
-          style={styles.reactLogo}
-        />
-      }
-    >
-      <ThemedView style={styles.headerContainer}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backButton}
+    <ThemedView style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      {/* Animated Header Background */}
+      <Animated.View 
+        style={[
+          styles.headerBackground, 
+          { 
+            opacity: headerOpacity,
+            backgroundColor: isDark ? "#1a1a1a" : "#fff" 
+          }
+        ]}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle} numberOfLines={1}>
+            {eventObject.title}
+          </ThemedText>
+          <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+            <ShareIcon size={20} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+      
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Event Image */}
+        <View style={styles.imageContainer}>
+          <Animated.Image
+            source={eventObject.image || require("@/assets/images/event.jpeg")}
+            style={[
+              styles.eventImage,
+              { transform: [{ scale: imageScale }] }
+            ]}
+          />
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.8)']}
+            style={styles.imageGradient}
+          />
+          <TouchableOpacity 
+            style={styles.backButtonOverlay} 
+            onPress={() => router.back()}
+          >
+            <ChevronLeft size={24} color="#fff" />
+          </TouchableOpacity>
+          
+          <View style={styles.eventImageContent}>
+            <ThemedText style={styles.eventTitle}>{eventObject.title}</ThemedText>
+            <View style={styles.hostContainer}>
+              <Image 
+                source={require("@/assets/images/starter-bg-01.jpg")} 
+                style={styles.hostImage} 
+              />
+              <ThemedText style={styles.hostName}>Hosted by {eventObject.creator}</ThemedText>
+            </View>
+          </View>
+        </View>
+        
+        {/* Event Details */}
+        <View style={styles.detailsContainer}>
+          <View style={styles.detailsSection}>
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <CalendarIcon size={20} color="#0c2a3f" />
+              </View>
+              <View>
+                <ThemedText style={styles.detailLabel}>Date</ThemedText>
+                <ThemedText style={styles.detailValue}>{eventObject.date}</ThemedText>
+              </View>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <Clock size={20} color="#0c2a3f" />
+              </View>
+              <View>
+                <ThemedText style={styles.detailLabel}>Time</ThemedText>
+                <ThemedText style={styles.detailValue}>{eventObject.time}</ThemedText>
+              </View>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <MapPin size={20} color="#0c2a3f" />
+              </View>
+              <View style={styles.locationContainer}>
+                <View>
+                  <ThemedText style={styles.detailLabel}>Location</ThemedText>
+                  <ThemedText style={styles.detailValue}>{eventObject.location}</ThemedText>
+                </View>
+                <TouchableOpacity 
+                  style={styles.directionsButton}
+                  onPress={handleGetDirections}
+                >
+                  <Navigation size={16} color="#0c2a3f" />
+                  <ThemedText style={styles.directionsText}>Directions</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
+            
+            <View style={styles.detailItem}>
+              <View style={styles.detailIconContainer}>
+                <Users size={20} color="#0c2a3f" />
+              </View>
+              <View>
+                <ThemedText style={styles.detailLabel}>Attendees</ThemedText>
+                <ThemedText style={styles.detailValue}>{attendeeCount} people going</ThemedText>
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.descriptionSection}>
+            <View style={styles.sectionHeader}>
+              <Info size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.sectionTitle}>About this event</ThemedText>
+            </View>
+            <ThemedText style={styles.descriptionText}>
+              {eventObject.details || "Join us for an amazing event! Connect with like-minded individuals and enjoy a memorable experience. Don't miss out on this opportunity to expand your network and create lasting memories."}
+            </ThemedText>
+          </View>
+          
+          <View style={styles.mapSection}>
+            <View style={styles.sectionHeader}>
+              <MapPin size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              <ThemedText style={styles.sectionTitle}>Event Location</ThemedText>
+            </View>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: eventObject.latitude || 37.78825,
+                longitude: eventObject.longitude || -122.4324,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: eventObject.latitude || 37.78825,
+                  longitude: eventObject.longitude || -122.4324,
+                }}
+                title={eventObject.title}
+                description={eventObject.location}
+              />
+            </MapView>
+          </View>
+        </View>
+      </Animated.ScrollView>
+      
+      {/* Bottom Action Bar */}
+      <View style={styles.actionBar}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.likeButton]} 
+          onPress={handleLike}
         >
-          <Entypo
-            name="chevron-small-left"
-            size={50}
-            color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
+          <Heart 
+            size={24} 
+            color={isLiked ? "#e74c3c" : isDark ? "#8da9bc" : "#666"} 
+            fill={isLiked ? "#e74c3c" : "none"} 
           />
         </TouchableOpacity>
-        <ThemedText type="title" style={styles.headerText}>
-          {eventObject.title}
-        </ThemedText>
-      </ThemedView>
-
-      <ThemedText>{eventObject.details}</ThemedText>
-      <ThemedText type="defaultSemiBold">
-        Host: {eventObject.creator}
-      </ThemedText>
-      <ThemedText type="defaultSemiBold">
-        Event Date: {eventObject.date}
-      </ThemedText>
-      <ThemedText type="defaultSemiBold">Time: {eventObject.time}</ThemedText>
-      <ThemedText type="defaultSemiBold">
-        Location: {eventObject.location}
-      </ThemedText>
-
-      <Collapsible title="Direction">
-        <MapView
-          style={styles.map}
-          initialRegion={{
-            latitude: eventObject.latitude || 37.78825,
-            longitude: eventObject.longitude || -122.4324,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.commentButton]}
+          onPress={() => Alert.alert("Comments", "Comments feature coming soon!")}
         >
-          <Marker
-            coordinate={{
-              latitude: eventObject.latitude || 37.78825,
-              longitude: eventObject.longitude || -122.4324,
-            }}
-            title={eventObject.title}
-            description={eventObject.location}
-          />
-        </MapView>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-
-      <ThemedView style={[styles.row, { justifyContent: "center" }]}>
-        <Btn title={"Join"} width="80%" onPress={handleJoin} />
-        <Btn
-          title={<Ionicons name="share-social-sharp" size={24} color="#fff" />}
-          width="50"
-          onPress={handleShare}
-        />
-      </ThemedView>
-    </ParallaxScrollView>
+          <MessageCircle size={24} color={isDark ? "#8da9bc" : "#666"} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.joinButton} 
+          onPress={handleJoin}
+        >
+          <ThemedText style={styles.joinButtonText}>Join Event</ThemedText>
+        </TouchableOpacity>
+      </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: "#808080",
-    bottom: -90,
-    left: -35,
-    position: "absolute",
+  container: {
+    flex: 1,
   },
-  titleContainer: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  map: {
-    width: "100%",
-    height: 250,
-    borderRadius: 10,
-    marginTop: 10,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  reactLogo: {
-    height: "100%",
-    width: "100%",
-    bottom: 0,
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
     left: 0,
-    position: "absolute",
+    right: 0,
+    height: 60,
+    zIndex: 10,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    height: 60,
+    paddingTop: Platform.OS === 'ios' ? 10 : 0,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    flex: 1,
+    textAlign: 'center',
   },
   backButton: {
-    position: "absolute",
-    left: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  headerText: {
-    marginLeft: 30,
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scrollContent: {
+    paddingBottom: 80,
+  },
+  imageContainer: {
+    height: 300,
+    position: 'relative',
+  },
+  eventImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '50%',
+    zIndex: 1,
+  },
+  backButtonOverlay: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 15,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  eventImageContent: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    zIndex: 2,
+  },
+  eventTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  hostContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  hostImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  hostName: {
+    fontSize: 14,
+    color: '#fff',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  detailsContainer: {
+    padding: 20,
+  },
+  detailsSection: {
+    marginBottom: 25,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 16,
+    padding: 15,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  detailIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(12, 42, 63, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  detailLabel: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginBottom: 2,
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  locationContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  directionsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(12, 42, 63, 0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 15,
+  },
+  directionsText: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#0c2a3f',
+  },
+  descriptionSection: {
+    marginBottom: 25,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginLeft: 10,
+  },
+  descriptionText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  mapSection: {
+    marginBottom: 20,
+  },
+  map: {
+    width: '100%',
+    height: 200,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  actionBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 20 : 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  actionButton: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    marginRight: 10,
+  },
+  likeButton: {
+    marginRight: 10,
+  },
+  commentButton: {
+    marginRight: 15,
+  },
+  joinButton: {
+    flex: 1,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: '#0c2a3f',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
+

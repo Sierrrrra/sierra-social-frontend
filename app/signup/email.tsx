@@ -1,111 +1,92 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-} from "react-native";
-import { Stack, Link, useRouter } from "expo-router";
-import { useDispatch } from "react-redux";
-import { Entypo, FontAwesome } from "@expo/vector-icons";
+} from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
 
-import Input from "@/components/Input";
-import ProgressBar from "@/components/ProgressBar";
-import { ThemedView } from "@/components/ThemedView";
-import { ThemedText } from "@/components/ThemedText";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
-import { updateSignupData } from "@/redux/signupSlice";
+import Input from '@/components/Input';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import SignupHeader from '@/components/SignupHeader';
+import NextButton from '@/components/NextButton';
+import { updateSignupData } from '@/redux/signupSlice';
 
 export default function Email() {
-  const [email, setEmail] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const dispatch = useDispatch();
-
-  const isButtonActive = !email;
-
-  const theme = useColorScheme() ?? "light";
   const router = useRouter();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleEmailChange = (text: string) => {
+    setEmail(text);
+    if (text && !validateEmail(text)) {
+      setEmailError('Please enter a valid email address');
+    } else {
+      setEmailError('');
+    }
+  };
+
+  const isButtonDisabled = !email || !!emailError;
+
   const handleNext = () => {
-    if (isButtonActive) return;
+    if (isButtonDisabled) return;
 
     dispatch(
       updateSignupData({
-        email: email,
+        email: email.trim(),
       })
     );
 
-    router.push("/signup/password");
+    router.push('/signup/password');
   };
 
   return (
-    <ThemedView style={[styles.container]}>
+    <ThemedView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "undefined"}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ThemedView style={styles.inner}>
-            {/* Header */}
             <ThemedView>
-              <ThemedView style={styles.headerContainer}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Entypo
-                    name="chevron-small-left"
-                    size={45}
-                    color={
-                      theme === "light" ? Colors.light.icon : Colors.dark.icon
-                    }
-                  />
-                </TouchableOpacity>
-                <ThemedText style={styles.headerText}>
-                  Get To Know You
-                </ThemedText>
-              </ThemedView>
+              <SignupHeader title="Get To Know You" progress={0.5} />
 
-              {/* ProgressBar */}
-              <ProgressBar progress={0.5} />
-
-              {/* Title and Subtitle */}
-              <ThemedText type="title">What's your email?</ThemedText>
-              <ThemedText style={[styles.subtitle]}>
-                Receive new events tailored to you, right in you inbox
+              <ThemedText type="title" style={styles.title}>What's your email?</ThemedText>
+              <ThemedText style={styles.subtitle}>
+                Receive new events tailored to you, right in your inbox
               </ThemedText>
 
-              {/* Input Fields */}
               <ThemedView style={styles.inputContainer}>
                 <Input
                   label="Your email address"
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={handleEmailChange}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  autoFocus
+                  returnKeyType="done"
+                  onSubmitEditing={handleNext}
                 />
+                {emailError ? (
+                  <ThemedText style={styles.errorText}>{emailError}</ThemedText>
+                ) : null}
               </ThemedView>
             </ThemedView>
 
-            {/* Next Button */}
-            <TouchableOpacity
-              style={[
-                styles.nextButton,
-                {
-                  backgroundColor:
-                    isButtonActive && theme === "light"
-                      ? Colors.dark.icon
-                      : isButtonActive && theme === "dark"
-                      ? Colors.dark.icon
-                      : "black",
-                },
-              ]}
-              onPress={handleNext}
-            >
-              <FontAwesome name="chevron-right" size={28} color="#fff" />
-            </TouchableOpacity>
+            <NextButton onPress={handleNext} disabled={isButtonDisabled} />
           </ThemedView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -116,55 +97,30 @@ export default function Email() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: Colors.screen,
     paddingTop: 30,
   },
   inner: {
     flex: 1,
     paddingHorizontal: 20,
-    // paddingVertical: 10,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginBottom: 5,
-    marginTop: "20%",
-  },
-  titleHighlight: {
-    fontStyle: "italic",
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   subtitle: {
     fontSize: 17,
-    // color: '#6e6e6e',
     marginBottom: 20,
+    opacity: 0.8,
   },
   inputContainer: {
     marginTop: 10,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    marginBottom: 50,
-  },
-  headerText: {
-    fontSize: 25,
-    fontWeight: "bold",
-    // color: Colors.primary,
-  },
-  backButton: {
-    position: "absolute",
-    left: -10,
-  },
-  nextButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 40,
-    alignSelf: "flex-end",
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 14,
+    marginTop: 5,
+    marginLeft: 5,
   },
 });

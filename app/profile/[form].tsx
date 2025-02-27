@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useRef } from "react";
 import {
   StyleSheet,
   Image,
@@ -8,59 +8,74 @@ import {
   TouchableOpacity,
   TextInput,
   View,
-  Text,
-  Dimensions,
+  Animated,
+  StatusBar,
+  Alert,
 } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import CountryPicker from "react-native-country-picker-modal";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
-import Feather from "@expo/vector-icons/Feather";
 import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useNavigation } from "@react-navigation/native";
-import { Entypo } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import Input from "@/components/Input";
-import Btn from "@/components/Btn";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
 import GooglePlacesInput from "@/components/GooglePlacesInput";
+import { 
+  ChevronLeft, 
+  Save, 
+  Calendar, 
+  Phone, 
+  MapPin, 
+  Home, 
+  ChevronDown, 
+  ChevronUp, 
+  Briefcase, 
+  GraduationCap, 
+  User, 
+  Mail, 
+  Edit,
+  Camera
+} from "lucide-react";
 
 export default function EditProfileScreen() {
+  // User data state
   const [name, setName] = useState("Israel Kollie");
   const [email, setEmail] = useState("israelkollie@gmail.com");
-  const [dob, setDob] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [date, setDate] = useState(new Date(1990, 0, 1));
+  const [phone, setPhone] = useState("+1 555-123-4567");
   const [countryCode, setCountryCode] = useState("US");
-  const [city, setCity] = useState("");
-  const [homeTown, setHomeTown] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
-  const [college, setCollege] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
-  const [workplace, setWorkplace] = useState("");
-  const [about, setAbout] = useState("");
-
-  const [showSection, setShowSection] = useState(false);
-  const [date, setDate] = useState(new Date());
-  const [show, setShow] = useState(false);
-
+  const [city, setCity] = useState("San Francisco, CA");
+  const [homeTown, setHomeTown] = useState("Monrovia, Liberia");
+  const [neighborhood, setNeighborhood] = useState("Mission District");
+  const [college, setCollege] = useState("University of California");
+  const [jobTitle, setJobTitle] = useState("Software Engineer");
+  const [workplace, setWorkplace] = useState("Tech Innovations Inc.");
+  const [about, setAbout] = useState("I'm passionate about technology and connecting with like-minded individuals. I enjoy hiking, photography, and exploring new restaurants in my free time.");
+  
+  // UI state
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showMoreSection, setShowMoreSection] = useState(false);
+  const [isCountryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [isChanged, setIsChanged] = useState(false);
+  const [profileImage, setProfileImage] = useState(null);
+  
+  // Animation and theme
   const theme = useColorScheme() ?? "light";
+  const isDark = theme === "dark";
   const navigation = useNavigation();
   const router = useRouter();
   const { event } = useGlobalSearchParams();
-  const [isPickerOpen, setPickerOpen] = useState(false);
-
-  console.log("cityyyy:", city);
-  const { height } = Dimensions.get("window");
-  const modalHeight = height * 0.1; // 40% screen height
-
-  const handlePlaceSelected = (place) => {
-    setCity(place);
-    console.log("Selected Place:", place);
-  };
+  const scrollY = useRef(new Animated.Value(0)).current;
+  
+  // Header animation
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -68,219 +83,371 @@ export default function EditProfileScreen() {
     });
   }, [navigation]);
 
-  const handleDateChange = (event, selectedDate) => {
-    if (event.type === "set") {
-      setDob(selectedDate || dob);
-    }
-    setShowDatePicker(false);
-  };
-  const onChangeDate = (event, selectedDate) => {
-    if (selectedDate) setDate(selectedDate);
-    if (Platform.OS === "android") setShow(false); // Close picker on Android
+  // Track changes to enable save button
+  const handleChange = () => {
+    if (!isChanged) setIsChanged(true);
   };
 
-  const toggleDatepicker = () => setShow(!show);
-  const options = { year: "numeric", month: "long", day: "numeric" };
+  // Date picker handlers
+  const handleDateChange = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setDate(selectedDate);
+      handleChange();
+    }
+  };
+
+  const toggleDatePicker = () => {
+    setShowDatePicker(!showDatePicker);
+  };
+
+  // Format date for display
+  const formatDate = (date) => {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString(undefined, options);
+  };
+
+  // Handle profile image selection
+  const handleSelectProfileImage = () => {
+    Alert.alert(
+      "Change Profile Photo",
+      "Choose an option",
+      [
+        { text: "Take Photo", onPress: () => console.log("Take photo") },
+        { text: "Choose from Library", onPress: () => console.log("Choose from library") },
+        { text: "Cancel", style: "cancel" }
+      ]
+    );
+  };
+
+  // Handle save profile
+  const handleSaveProfile = () => {
+    // Here you would save the profile data to your backend
+    console.log("Saving profile data");
+    Alert.alert(
+      "Profile Updated",
+      "Your profile has been successfully updated.",
+      [{ text: "OK", onPress: () => router.back() }]
+    );
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#F7F8FA", dark: "#1A1A1A" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/sira-notf.jpg")}
-          style={styles.reactLogo}
-        />
-      }
-      headerTitle="Israel Kollie"
-      headerTitleFontSize={50}
-    >
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={90}
+    <ThemedView style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      {/* Animated Header Background */}
+      <Animated.View 
+        style={[
+          styles.headerBackground, 
+          { 
+            opacity: headerOpacity,
+            backgroundColor: isDark ? "#1a1a1a" : "#fff" 
+          }
+        ]}
       >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1 }}
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
+          </TouchableOpacity>
+          <ThemedText style={styles.headerTitle}>Edit Profile</ThemedText>
+          <TouchableOpacity 
+            style={[
+              styles.saveButton, 
+              !isChanged && styles.saveButtonDisabled
+            ]}
+            onPress={handleSaveProfile}
+            disabled={!isChanged}
+          >
+            <Save size={20} color={isChanged ? (isDark ? "#fff" : "#0c2a3f") : "#8da9bc"} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+      
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <Animated.ScrollView
+          contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+            { useNativeDriver: true }
+          )}
+          scrollEventThrottle={16}
         >
-          <ThemedView style={styles.headerContainer}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Entypo
-                name="chevron-small-left"
-                size={50}
-                color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
-              />
+          {/* Header */}
+          <View style={styles.pageHeader}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButtonTop}>
+              <ChevronLeft size={24} color={isDark ? "#fff" : "#333"} />
             </TouchableOpacity>
-            <ThemedText type="title" style={styles.headerText}>
-              {event}
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.formSection}>
-            <ThemedView style={styles.section}>
-              <ThemedText style={styles.label}>Name</ThemedText>
-              <Input
-                label={"Name"}
-                value={name}
-                onChangeText={(text) => setName(text)}
+            <ThemedText style={styles.pageTitle}>Edit Profile</ThemedText>
+          </View>
+          
+          {/* Profile Image Section */}
+          <View style={styles.profileImageSection}>
+            <View style={styles.profileImageContainer}>
+              <Image 
+                source={profileImage || require("@/assets/images/starter-bg-01.jpg")} 
+                style={styles.profileImage} 
               />
-
-              <ThemedText style={styles.label}>Email</ThemedText>
-              <Input
-                label={"Email"}
-                value={email}
-                onChangeText={(text) => setEmail(text)}
-              />
-
-              <ThemedText style={styles.label}>Date of Birth</ThemedText>
-              <TouchableOpacity
-                style={styles.dateField}
-                onPress={toggleDatepicker}
+              <TouchableOpacity 
+                style={styles.editImageButton}
+                onPress={handleSelectProfileImage}
               >
-                <ThemedText style={styles.dateText}>
-                  {date.toLocaleDateString(undefined, options)}
-                </ThemedText>
+                <Camera size={18} color="#fff" />
               </TouchableOpacity>
-
-              {/* Date Picker */}
-              {show && (
+            </View>
+            <ThemedText style={styles.profileName}>{name}</ThemedText>
+            <ThemedText style={styles.profileEmail}>{email}</ThemedText>
+          </View>
+          
+          {/* Basic Information Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Basic Information</ThemedText>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <User size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Full Name</ThemedText>
+              </View>
+              <Input
+                value={name}
+                onChangeText={(text) => {
+                  setName(text);
+                  handleChange();
+                }}
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <Mail size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Email Address</ThemedText>
+              </View>
+              <Input
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  handleChange();
+                }}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <Calendar size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Date of Birth</ThemedText>
+              </View>
+              <TouchableOpacity 
+                style={styles.datePickerButton}
+                onPress={toggleDatePicker}
+              >
+                <ThemedText style={styles.dateText}>{formatDate(date)}</ThemedText>
+                <Calendar size={18} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              </TouchableOpacity>
+              
+              {showDatePicker && (
                 <DateTimePicker
                   value={date}
                   mode="date"
-                  display="spinner"
-                  onChange={onChangeDate}
-                  style={{ backgroundColor: Colors.screen }}
+                  display={Platform.OS === "ios" ? "spinner" : "default"}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  minimumDate={new Date(1920, 0, 1)}
                 />
               )}
-
-              <ThemedText style={styles.label}>Phone Number</ThemedText>
-              <View style={styles.phoneContainer}>
-                <CountryPicker
-                  countryCode={countryCode}
-                  withFlag
-                  withFilter
-                  onSelect={(country) => setCountryCode(country.cca2)}
-                  style={{ modal: { height: modalHeight } }}
-                  theme={{
-                    backgroundColor: "#fff",
-                    fontSize: 16,
-                    searchTextInput: {
-                      fontSize: 16,
-                      borderWidth: 1,
-                      borderColor: "#ccc",
-                      padding: 10,
-                      borderRadius: 5,
-                    },
-                  }}
-                />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <Phone size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Phone Number</ThemedText>
+              </View>
+              <View style={styles.phoneInputContainer}>
+                <TouchableOpacity 
+                  style={styles.countryPickerButton}
+                  onPress={() => setCountryPickerOpen(true)}
+                >
+                  <CountryPicker
+                    countryCode={countryCode}
+                    withFlag
+                    withFilter
+                    withCountryNameButton={false}
+                    withAlphaFilter
+                    onSelect={(country) => {
+                      setCountryCode(country.cca2);
+                      handleChange();
+                    }}
+                    visible={isCountryPickerOpen}
+                    onClose={() => setCountryPickerOpen(false)}
+                    containerButtonStyle={styles.countryPickerContainer}
+                  />
+                  <ChevronDown size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                </TouchableOpacity>
                 <TextInput
-                  style={styles.phoneInput}
+                  style={[
+                    styles.phoneInput,
+                    isDark && styles.phoneInputDark
+                  ]}
                   value={phone}
-                  onChangeText={setPhone}
+                  onChangeText={(text) => {
+                    setPhone(text);
+                    handleChange();
+                  }}
                   keyboardType="phone-pad"
-                  placeholder="Enter your phone number"
+                  placeholder="Phone number"
+                  placeholderTextColor={isDark ? "#8da9bc" : "#999"}
                 />
               </View>
-
-              <ThemedText style={styles.label}>City</ThemedText>
-              <ThemedView style={{ marginLeft: -10 }}>
-                <GooglePlacesInput
-                  placeholder="City"
-                  onPlaceSelected={(city) => setCity(city)}
-                  // stylesOverride={{
-                  //   textInput: { color: "black" },
-                  // }}
-                />
-              </ThemedView>
-
-              <ThemedText style={styles.label}>Home Town</ThemedText>
-              <ThemedView style={{ marginLeft: -10 }}>
-                <GooglePlacesInput
-                  placeholder="Home Town"
-                  onPlaceSelected={(town) => setHomeTown(town)}
-                  // stylesOverride={{
-                  //   textInput: { color: "black" },
-                  // }}
-                />
-              </ThemedView>
-            </ThemedView>
-
-            <ThemedView style={styles.section}>
-              <TouchableOpacity
-                style={styles.sectionHeader}
-                onPress={() => setShowSection(!showSection)}
-              >
-                <ThemedText style={styles.sectionTitle}>
-                  More About You
-                </ThemedText>
-                <Feather
-                  name="chevron-down"
-                  size={30}
-                  color={
-                    theme === "light" ? Colors.light.icon : Colors.dark.icon
-                  }
-                />
-              </TouchableOpacity>
-
-              {showSection && (
-                <>
-                  <ThemedText style={styles.label}>
-                    Current Neighborhood
-                  </ThemedText>
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <MapPin size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Current City</ThemedText>
+              </View>
+              <GooglePlacesInput
+                placeholder="Where do you live now?"
+                onPlaceSelected={(place) => {
+                  setCity(place);
+                  handleChange();
+                }}
+              />
+            </View>
+            
+            <View style={styles.inputGroup}>
+              <View style={styles.labelContainer}>
+                <Home size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                <ThemedText style={styles.inputLabel}>Hometown</ThemedText>
+              </View>
+              <GooglePlacesInput
+                placeholder="Where are you from?"
+                onPlaceSelected={(place) => {
+                  setHomeTown(place);
+                  handleChange();
+                }}
+              />
+            </View>
+          </View>
+          
+          {/* More About You Section */}
+          <View style={styles.section}>
+            <TouchableOpacity 
+              style={styles.sectionHeader}
+              onPress={() => setShowMoreSection(!showMoreSection)}
+            >
+              <ThemedText style={styles.sectionTitle}>More About You</ThemedText>
+              {showMoreSection ? (
+                <ChevronUp size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              ) : (
+                <ChevronDown size={20} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+              )}
+            </TouchableOpacity>
+            
+            {showMoreSection && (
+              <>
+                <View style={styles.inputGroup}>
+                  <View style={styles.labelContainer}>
+                    <MapPin size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                    <ThemedText style={styles.inputLabel}>Neighborhood</ThemedText>
+                  </View>
                   <Input
-                    label={"Add your current neighborhood"}
                     value={neighborhood}
-                    onChangeText={(text) => setNeighborhood(text)}
+                    onChangeText={(text) => {
+                      setNeighborhood(text);
+                      handleChange();
+                    }}
+                    placeholder="Your current neighborhood"
                   />
-
-                  <ThemedText style={styles.label}>College</ThemedText>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <View style={styles.labelContainer}>
+                    <GraduationCap size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                    <ThemedText style={styles.inputLabel}>College/University</ThemedText>
+                  </View>
                   <Input
-                    label={"Add your college name"}
                     value={college}
-                    onChangeText={(text) => setCollege(text)}
+                    onChangeText={(text) => {
+                      setCollege(text);
+                      handleChange();
+                    }}
+                    placeholder="Where did you study?"
                   />
-
-                  <ThemedText style={styles.label}>Job Title</ThemedText>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <View style={styles.labelContainer}>
+                    <Briefcase size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                    <ThemedText style={styles.inputLabel}>Job Title</ThemedText>
+                  </View>
                   <Input
-                    label={"Add your job title"}
                     value={jobTitle}
-                    onChangeText={(text) => setJobTitle(text)}
+                    onChangeText={(text) => {
+                      setJobTitle(text);
+                      handleChange();
+                    }}
+                    placeholder="What do you do?"
                   />
-
-                  <ThemedText style={styles.label}>Where You Work</ThemedText>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <View style={styles.labelContainer}>
+                    <Briefcase size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                    <ThemedText style={styles.inputLabel}>Workplace</ThemedText>
+                  </View>
                   <Input
-                    label={"Add your workplace"}
                     value={workplace}
-                    onChangeText={(text) => setWorkplace(text)}
+                    onChangeText={(text) => {
+                      setWorkplace(text);
+                      handleChange();
+                    }}
+                    placeholder="Where do you work?"
                   />
-
-                  <ThemedText style={styles.label}>
-                    What Are You Up To?
-                  </ThemedText>
+                </View>
+                
+                <View style={styles.inputGroup}>
+                  <View style={styles.labelContainer}>
+                    <User size={16} color={isDark ? "#8da9bc" : "#0c2a3f"} />
+                    <ThemedText style={styles.inputLabel}>About Me</ThemedText>
+                  </View>
                   <Input
-                    label={
-                      "Tell us about yourself, your hobbies, interests, etc."
-                    }
+                    value={about}
+                    onChangeText={(text) => {
+                      setAbout(text);
+                      handleChange();
+                    }}
+                    placeholder="Tell us about yourself..."
                     multiline={true}
                     height={120}
-                    value={about}
-                    onChangeText={setAbout}
                   />
-                </>
-              )}
-            </ThemedView>
-
-            <ThemedView style={styles.buttonContainer}>
-              <Btn title={"Save"} />
-            </ThemedView>
-          </ThemedView>
-        </ScrollView>
+                </View>
+              </>
+            )}
+          </View>
+        </Animated.ScrollView>
       </KeyboardAvoidingView>
-    </ParallaxScrollView>
+      
+      {/* Save Button */}
+      <View style={styles.saveButtonContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.saveButtonLarge,
+            !isChanged && styles.saveButtonLargeDisabled
+          ]}
+          onPress={handleSaveProfile}
+          disabled={!isChanged}
+        >
+          <Save size={20} color="#fff" style={styles.saveButtonIcon} />
+          <ThemedText style={styles.saveButtonText}>Save Profile</ThemedText>
+        </TouchableOpacity>
+      </View>
+    </ThemedView>
   );
 }
 
@@ -288,106 +455,198 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  profileHeader: {
-    alignItems: "center",
-    paddingVertical: 20,
-    marginBottom: 10,
+  keyboardAvoidingView: {
+    flex: 1,
+  },
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    zIndex: 10,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    height: 60,
+    paddingTop: Platform.OS === 'ios' ? 10 : 0,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  pageHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  backButtonTop: {
+    marginRight: 15,
+  },
+  pageTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  profileImageSection: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginBottom: 15,
   },
   profileImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginBottom: 10,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#0c2a3f',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 5,
   },
   profileEmail: {
     fontSize: 14,
-    // color: Colors.gray,
-  },
-  formSection: {
-    paddingHorizontal: 15,
-    marginBottom: 50,
+    opacity: 0.7,
   },
   section: {
-    // backgroundColor: '#FFF',
-    marginBottom: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    marginHorizontal: 20,
+    marginBottom: 25,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 16,
+    padding: 15,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 5,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 15,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: "500",
-    marginTop: 10,
-    marginBottom: 5,
+  inputGroup: {
+    marginBottom: 20,
   },
-  buttonContainer: {
-    marginTop: 10,
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
     paddingHorizontal: 15,
+    paddingVertical: 12,
   },
-  reactLogo: {
-    height: "100%",
-    width: "100%",
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  dateText: {
+    fontSize: 16,
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    // justifyContent: 'center',
-    marginTop: Platform.OS === "ios" ? 5 : 6,
-    // marginBottom: 100,
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  backButton: {
-    position: "absolute",
-    left: -18,
+  countryPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    marginRight: 10,
   },
-  headerText: {
-    // fontSize: 25,
-    // fontWeight: 'bold',
-    marginLeft: 30,
-    // color: Colors.primary,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-    marginVertical: 5,
-  },
-  phoneContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 5,
+  countryPickerContainer: {
+    marginRight: 5,
   },
   phoneInput: {
     flex: 1,
-    marginLeft: 10,
+    backgroundColor: 'rgba(140, 140, 140, 0.1)',
+    borderRadius: 12,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
     fontSize: 16,
-    color: "#000",
+    color: '#000',
   },
-  dateField: {
-    borderBottomWidth: 1,
-    borderColor: "#ccc",
-    paddingVertical: 10,
-    justifyContent: "center",
+  phoneInputDark: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: '#fff',
   },
-  dateText: {
-    fontSize: 18,
+  saveButtonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  saveButtonLarge: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0c2a3f',
+    borderRadius: 12,
+    paddingVertical: 15,
+  },
+  saveButtonLargeDisabled: {
+    backgroundColor: 'rgba(12, 42, 63, 0.5)',
+  },
+  saveButtonIcon: {
+    marginRight: 10,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

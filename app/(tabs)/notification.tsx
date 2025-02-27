@@ -1,18 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Image,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   View,
-  Text,
+  Animated,
+  StatusBar,
 } from "react-native";
 
-import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { Colors } from "@/constants/Colors";
+import { Bell, MessageCircle, Users, MoreHorizontal } from "lucide-react";
 
 // Sample Data for Notifications
 const notifications = [
@@ -105,9 +105,11 @@ const sampleGroups = [
   },
 ];
 
-export default function HomeScreen() {
+export default function NotificationScreen() {
   const [activeFilter, setActiveFilter] = useState("All");
   const theme = useColorScheme() ?? "light";
+  const isDark = theme === "dark";
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   // Filter notifications based on the active tab
   const filteredNotifications =
@@ -119,144 +121,232 @@ export default function HomeScreen() {
         )
       : sampleGroups;
 
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 50],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   const renderFilterButtons = () => (
-    <ThemedView style={styles.filterContainer}>
-      {["All", "Messages", "Groups"].map((filter) => (
-        <TouchableOpacity
-          key={filter}
-          onPress={() => setActiveFilter(filter)}
+    <View style={styles.filterContainer}>
+      <TouchableOpacity
+        onPress={() => setActiveFilter("All")}
+        style={[
+          styles.filterButton,
+          activeFilter === "All" && styles.activeFilterButton,
+        ]}
+      >
+        <Bell size={16} color={activeFilter === "All" ? "#fff" : "#0c2a3f"} />
+        <ThemedText
           style={[
-            styles.filterButton,
-            {
-              backgroundColor: theme === "light" ? "#E0E0E0" : "#333",
-            },
-            activeFilter === filter && {
-              backgroundColor: theme === "light" ? "#fff" : "#fff",
-            },
+            styles.filterButtonText,
+            activeFilter === "All" && styles.activeFilterText,
           ]}
         >
-          <ThemedText
-            style={[
-              styles.filterButtonText,
-              activeFilter === filter && {
-                color: "black",
-                fontWeight: "bold",
-              },
-            ]}
-          >
-            {filter}
-          </ThemedText>
-        </TouchableOpacity>
-      ))}
-    </ThemedView>
-  );
-
-  const renderNotification = (item) => (
-    <View
-      key={item.id}
-      style={[
-        styles.notificationCard,
-        { backgroundColor: theme === "light" ? "#fff" : "#333" },
-      ]}
-    >
-      <Image source={item.profileImage} style={styles.profileImage} />
-      <View style={styles.notificationContent}>
-        <ThemedText style={styles.notificationText}>
-          <ThemedText style={styles.boldText}>{item.name} </ThemedText>
-          {item.action}: <Text>{item.text}</Text>
+          All
         </ThemedText>
-        <Text style={styles.timestamp}>{item.time}</Text>
-      </View>
-      <TouchableOpacity>
-        <Text style={styles.moreOptions}>•••</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setActiveFilter("Messages")}
+        style={[
+          styles.filterButton,
+          activeFilter === "Messages" && styles.activeFilterButton,
+        ]}
+      >
+        <MessageCircle size={16} color={activeFilter === "Messages" ? "#fff" : "#0c2a3f"} />
+        <ThemedText
+          style={[
+            styles.filterButtonText,
+            activeFilter === "Messages" && styles.activeFilterText,
+          ]}
+        >
+          Messages
+        </ThemedText>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setActiveFilter("Groups")}
+        style={[
+          styles.filterButton,
+          activeFilter === "Groups" && styles.activeFilterButton,
+        ]}
+      >
+        <Users size={16} color={activeFilter === "Groups" ? "#fff" : "#0c2a3f"} />
+        <ThemedText
+          style={[
+            styles.filterButtonText,
+            activeFilter === "Groups" && styles.activeFilterText,
+          ]}
+        >
+          Groups
+        </ThemedText>
       </TouchableOpacity>
     </View>
   );
 
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/sira-notf.jpg")}
-          style={styles.reactLogo}
-        />
-      }
-      headerTitle="sierra"
-      headerTitleFontSize={50}
+  const renderNotification = (item) => (
+    <TouchableOpacity
+      key={item.id}
+      style={styles.notificationCard}
+      activeOpacity={0.7}
     >
+      <Image source={item.profileImage} style={styles.profileImage} />
+      <View style={styles.notificationContent}>
+        <View style={styles.notificationHeader}>
+          <ThemedText style={styles.boldText}>{item.name}</ThemedText>
+          <ThemedText style={styles.timestamp}>{item.time}</ThemedText>
+        </View>
+        <ThemedText style={styles.notificationText}>
+          {item.action}
+        </ThemedText>
+        <ThemedText style={styles.notificationMessage} numberOfLines={2}>
+          {item.text}
+        </ThemedText>
+      </View>
+      <TouchableOpacity style={styles.moreButton}>
+        <MoreHorizontal size={18} color={isDark ? "#8da9bc" : "#8da9bc"} />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ThemedView style={styles.container}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      
+      <Animated.View style={[
+        styles.headerBackground,
+        { opacity: headerOpacity, backgroundColor: isDark ? "#1a1a1a" : "#fff" }
+      ]} />
+      
+      <View style={styles.header}>
+        <ThemedText style={styles.headerTitle}>Notifications</ThemedText>
+      </View>
+
       {renderFilterButtons()}
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {filteredNotifications.map((item) => renderNotification(item))}
-      </ScrollView>
-    </ParallaxScrollView>
+
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+      >
+        {filteredNotifications.map(renderNotification)}
+        
+        <View style={styles.endOfList}>
+          <ThemedText style={styles.endOfListText}>
+            You're all caught up!
+          </ThemedText>
+        </View>
+      </Animated.ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  reactLogo: {
-    height: "100%",
-    width: "100%",
-    bottom: 0,
+  container: {
+    flex: 1,
+  },
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
     left: 0,
-    position: "absolute",
+    right: 0,
+    height: 100,
+    zIndex: 1,
+  },
+  header: {
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 15,
+    zIndex: 2,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
   },
   filterContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginVertical: 10,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
+    marginBottom: 15,
+    zIndex: 2,
   },
   filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingHorizontal: 15,
     borderRadius: 20,
-    // backgroundColor: '#E0E0E0',
+    marginRight: 10,
+    backgroundColor: "rgba(140, 140, 140, 0.1)",
+  },
+  activeFilterButton: {
+    backgroundColor: "#0c2a3f",
   },
   filterButtonText: {
     fontSize: 14,
-    // color: '#333',
+    marginLeft: 5,
+    fontWeight: "500",
+  },
+  activeFilterText: {
+    color: "#fff",
   },
   scrollContainer: {
-    paddingBottom: 20,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
   notificationCard: {
     flexDirection: "row",
-    alignItems: "center",
-    padding: 10,
-    borderRadius: 8,
+    padding: 15,
+    borderRadius: 12,
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: "rgba(140, 140, 140, 0.1)",
   },
   profileImage: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+    marginRight: 15,
   },
   notificationContent: {
     flex: 1,
   },
+  notificationHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
   notificationText: {
     fontSize: 14,
-    lineHeight: 20,
+    marginBottom: 4,
+  },
+  notificationMessage: {
+    fontSize: 13,
+    opacity: 0.7,
   },
   boldText: {
     fontWeight: "600",
+    fontSize: 15,
   },
   timestamp: {
     fontSize: 12,
-    color: "#999",
-    marginTop: 4,
+    opacity: 0.6,
   },
-  moreOptions: {
-    fontSize: 20,
-    color: "#999",
-    fontWeight: "600",
+  moreButton: {
+    padding: 5,
+    alignSelf: "flex-start",
+  },
+  endOfList: {
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  endOfListText: {
+    fontSize: 14,
+    opacity: 0.6,
   },
 });

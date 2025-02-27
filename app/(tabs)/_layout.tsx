@@ -1,83 +1,110 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
+import { BlurView } from "expo-blur";
 
 import { HapticTab } from "@/components/HapticTab";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import Feather from "@expo/vector-icons/Feather";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import Entypo from "@expo/vector-icons/Entypo";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import TabBarBackground from "@/components/ui/TabBarBackground";
-import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
+
+// Icons
+import { Home, Calendar, Bell, User, Search } from "lucide-react";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: "#0c2a3f",
+        tabBarInactiveTintColor: isDark ? "#8da9bc" : "#8da9bc",
         headerShown: false,
         tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
+        tabBarBackground: () => (
+          <BlurView 
+            intensity={80} 
+            tint={isDark ? "dark" : "light"}
+            style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0 
+            }}
+          />
+        ),
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: "absolute",
-            height: 70,
+            height: 80,
+            paddingBottom: 20,
+            borderTopWidth: 0,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: -3 },
+            shadowOpacity: 0.1,
+            shadowRadius: 5,
           },
           default: {
             height: 70,
+            paddingBottom: 10,
+            borderTopWidth: 0,
+            elevation: 10,
+            backgroundColor: isDark ? "rgba(20, 20, 20, 0.9)" : "rgba(255, 255, 255, 0.9)",
           },
         }),
+        tabBarLabelStyle: {
+          fontSize: 11,
+          marginTop: -5,
+          fontWeight: "500",
+        },
+        tabBarIconStyle: {
+          marginTop: 5,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "",
-          tabBarIcon: ({ color }) => (
-            <Entypo name="home" size={28} color={color} />
+          title: "Home",
+          tabBarIcon: ({ color, size }) => (
+            <Home size={24} color={color} strokeWidth={2.5} />
           ),
         }}
       />
-      {/* <Tabs.Screen
+      <Tabs.Screen
         name="explore"
         options={{
-          title: '',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Explore",
+          tabBarIcon: ({ color, size }) => (
+            <Search size={24} color={color} strokeWidth={2.5} />
+          ),
         }}
-      /> */}
+      />
       <Tabs.Screen
         name="events"
         options={{
-          title: "",
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons
-              name="party-popper"
-              size={28}
-              color={color}
-            />
+          title: "Events",
+          tabBarIcon: ({ color, size }) => (
+            <Calendar size={24} color={color} strokeWidth={2.5} />
           ),
         }}
       />
       <Tabs.Screen
         name="notification"
         options={{
-          title: "",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="notifications-outline" size={28} color={color} />
+          title: "Alerts",
+          tabBarIcon: ({ color, size }) => (
+            <Bell size={24} color={color} strokeWidth={2.5} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: "",
-          tabBarIcon: ({ color }) => (
-            <Feather name="user" size={28} color={color} />
+          title: "Profile",
+          tabBarIcon: ({ color, size }) => (
+            <User size={24} color={color} strokeWidth={2.5} />
           ),
         }}
       />

@@ -1,89 +1,80 @@
-import React from "react";
-import { StyleSheet } from "react-native";
-import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
-const GooglePlacesInput = ({
-  placeholder = "Search",
-  onPlaceSelected,
-  apiKey,
-  stylesOverride = {},
-}) => {
+interface GooglePlacesInputProps {
+  placeholder?: string;
+  onPlaceSelected: (data: string) => void;
+}
+
+const GooglePlacesInput = ({ 
+  placeholder = "Search for a location", 
+  onPlaceSelected 
+}: GooglePlacesInputProps) => {
+  const theme = useColorScheme() ?? 'light';
+  const isDark = theme === 'dark';
+
   return (
-    <GooglePlacesAutocomplete
-      placeholder={placeholder}
-      disableScroll={true}
-      fetchDetails={true}
-      onPress={(data, details = null) => {
-        if (details && onPlaceSelected) {
-          const { description } = data;
-          const { location } = details.geometry;
-
-          onPlaceSelected({
-            description,
-            lat: location.lat,
-            lng: location.lng,
-          });
-        }
-      }}
-      query={{
-        key: "AIzaSyAJhVEJXghor3TNWfcRvUOJrfhk-n8pI3Q",
-        language: "en",
-      }}
-      styles={{
-        container: { flex: 1, zIndex: 1 },
-        textInputContainer: {
-          width: "100%",
-        },
-        textInput: {
-          height: 45,
-          // padding: 10,
-          borderBottomWidth: 1,
-          borderBottomColor: "#e0e0e0",
-          // marginBottom: 15,
-          paddingBottom: 5,
-          fontSize: 17,
-          backgroundColor: "none",
-          color: "gray",
-        },
-        predefinedPlacesDescription: {
-          color: "#1faadb",
-        },
-        row: {
-          backgroundColor: "#fff",
-          padding: 13,
-          height: 44,
-          flexDirection: "row",
-        },
-        listView: { zIndex: 2 },
-      }}
-    />
+    <View style={styles.container}>
+      <GooglePlacesAutocomplete
+        placeholder={placeholder}
+        onPress={(data, details = null) => {
+          // 'details' is provided when fetchDetails = true
+          onPlaceSelected(data.description);
+        }}
+        query={{
+          key: 'YOUR_API_KEY', // Replace with your Google Places API key
+          language: 'en',
+        }}
+        fetchDetails={true}
+        styles={{
+          container: {
+            flex: 0,
+          },
+          textInputContainer: {
+            backgroundColor: 'transparent',
+            borderTopWidth: 0,
+            borderBottomWidth: 0,
+          },
+          textInput: {
+            height: 45,
+            color: isDark ? '#fff' : '#000',
+            fontSize: 16,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(140, 140, 140, 0.1)',
+            borderRadius: 12,
+            paddingHorizontal: 15,
+          },
+          predefinedPlacesDescription: {
+            color: '#1faadb',
+          },
+          listView: {
+            backgroundColor: isDark ? '#1a1a1a' : '#fff',
+            borderRadius: 12,
+            marginTop: 5,
+          },
+          row: {
+            backgroundColor: isDark ? '#1a1a1a' : '#fff',
+            padding: 13,
+          },
+          separator: {
+            height: 1,
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+          },
+          description: {
+            color: isDark ? '#fff' : '#000',
+          },
+        }}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, zIndex: 1 },
-  textInputContainer: {
-    width: "100%",
+  container: {
+    flex: 0,
+    marginBottom: 10,
   },
-  textInput: {
-    height: 45,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    marginBottom: 15,
-    paddingBottom: 5,
-    fontSize: 17,
-    color: "gray",
-  },
-  predefinedPlacesDescription: {
-    color: "#1faadb",
-  },
-  row: {
-    backgroundColor: "#fff",
-    padding: 13,
-    height: 44,
-    flexDirection: "row",
-  },
-  listView: { zIndex: 2 },
 });
 
 export default GooglePlacesInput;
