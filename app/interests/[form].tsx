@@ -1,33 +1,42 @@
 import React, { useState, useLayoutEffect } from "react";
-import { TouchableOpacity, StyleSheet, ScrollView, Platform, Image, View } from "react-native";
+import {
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Platform,
+  Image,
+  View,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useGlobalSearchParams, useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { Entypo } from "@expo/vector-icons";
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import Btn from '@/components/Btn';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import Btn from "@/components/Btn";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { Colors } from "@/constants/Colors";
 
 const interests = [
   "Food & Drinks",
   "Music",
   "Bars",
   "Nightlife",
-  "Fitness & Wellness",
   "Travel & Adventure",
   "Entertainment",
+  "Weekend Trips",
+  "Education",
+  "Fitness & Wellness",
   "Arts & Culture",
-  "Dating",
   "Business & Networking",
   "Technology & Innovation",
+  "Dating",
   "Crafting",
   "Tech-Free Connections",
 ];
 
 export default function EditInterestsScreen() {
-  const theme = useColorScheme() ?? 'light';
+  const theme = useColorScheme() ?? "light";
   const navigation = useNavigation();
   const router = useRouter();
   const { event } = useGlobalSearchParams();
@@ -47,7 +56,9 @@ export default function EditInterestsScreen() {
 
   const toggleSelection = (interest) => {
     if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter((item) => item !== interest));
+      setSelectedInterests(
+        selectedInterests.filter((item) => item !== interest)
+      );
     } else {
       setSelectedInterests([...selectedInterests, interest]);
     }
@@ -63,10 +74,10 @@ export default function EditInterestsScreen() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#F7F8FA', dark: '#1A1A1A' }}
+      headerBackgroundColor={{ light: "#F7F8FA", dark: "#1A1A1A" }}
       headerImage={
         <Image
-          source={require('@/assets/images/sira-notf.jpg')}
+          source={require("@/assets/images/sira-notf.jpg")}
           style={styles.reactLogo}
         />
       }
@@ -74,14 +85,26 @@ export default function EditInterestsScreen() {
       headerTitleFontSize={50}
     >
       <ThemedView style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Entypo name="chevron-small-left" size={50} color={theme === 'light' ? Colors.light.icon : Colors.dark.icon} />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Entypo
+            name="chevron-small-left"
+            size={50}
+            color={theme === "light" ? Colors.light.icon : Colors.dark.icon}
+          />
         </TouchableOpacity>
-        <ThemedText type='title' style={styles.headerText}>{event}</ThemedText>
+        <ThemedText type="title" style={styles.headerText}>
+          {event}
+        </ThemedText>
       </ThemedView>
 
       <ThemedView style={styles.container}>
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* <ThemedText style={styles.subtitle}>
             Select areas that align with your university life.
           </ThemedText> */}
@@ -95,7 +118,7 @@ export default function EditInterestsScreen() {
                   style={[
                     styles.interestButton,
                     isSelected && {
-                      backgroundColor: theme === 'light' ? '#fff' : '#333',
+                      backgroundColor: theme === "light" ? "#fff" : "#333",
                     },
                   ]}
                   onPress={() => toggleSelection(interest)}
@@ -127,19 +150,19 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   reactLogo: {
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
     bottom: 0,
     left: 0,
-    position: 'absolute',
+    position: "absolute",
   },
   headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Platform.OS === 'ios' ? 5 : 6,
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: Platform.OS === "ios" ? 5 : 6,
   },
   backButton: {
-    position: 'absolute',
+    position: "absolute",
     left: -18,
   },
   headerText: {
@@ -162,8 +185,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#333',
-    backgroundColor: '#F0F0F0',
+    borderColor: "#333",
+    backgroundColor: "#F0F0F0",
     margin: 5,
   },
   selectedInterestButton: {
@@ -172,11 +195,11 @@ const styles = StyleSheet.create({
   },
   interestText: {
     fontSize: 14,
-    color: '#555',
-    textAlign: 'center',
+    color: "#555",
+    textAlign: "center",
   },
   selectedInterestText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
   },
 });

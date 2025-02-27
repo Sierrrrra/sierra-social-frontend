@@ -29,6 +29,7 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    LiberRegular: require("../assets/fonts/LiberRegular.ttf"),
   });
 
   const router = useRouter();

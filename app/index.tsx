@@ -23,10 +23,16 @@ export default function index() {
         <SafeAreaView style={styles.container}>
           {/* Main Content */}
           <ThemedView style={styles.overlay}>
-            <ThemedText type="title" style={{ color: "#fff" }}>
-              sierra
+            <ThemedText
+              type="title"
+              style={{ color: "#fff", fontFamily: "LiberRegular" }}
+            >
+              chapters
             </ThemedText>
-            <ThemedText type="subtitle" style={styles.subtitle}>
+            <ThemedText
+              type="subtitle"
+              style={{ ...styles.subtitle, fontFamily: "LiberRegular" }}
+            >
               choose chance
             </ThemedText>
           </ThemedView>
@@ -67,7 +73,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 25,
+    fontSize: 17,
     color: "#fff",
     marginTop: 8,
     textAlign: "center",

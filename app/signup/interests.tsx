@@ -22,9 +22,9 @@ const interestsValues = [
   "Education",
   "Fitness & Wellness",
   "Arts & Culture",
-  "Dating",
   "Business & Networking",
   "Technology & Innovation",
+  "Dating",
   "Crafting",
   "Tech-Free Connections",
 ];

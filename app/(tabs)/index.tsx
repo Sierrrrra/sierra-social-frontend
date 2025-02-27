@@ -16,6 +16,7 @@ import { useRouter } from "expo-router";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedView } from "@/components/ThemedView";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import events from "@/utils/eventData";
 import EventList from "@/components/EventList";
 
@@ -91,15 +92,18 @@ export default function Home() {
   return (
     <ThemedView style={styles.screenContainer}>
       <ParallaxScrollView
-        headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-        headerImage={
-          <Image
-            source={require("@/assets/images/sira-home.jpg")}
-            style={styles.reactLogo}
-          />
+        // headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
+        // headerImage={
+        //   <Image
+        //     source={require("@/assets/images/sira-home.jpg")}
+        //     style={styles.reactLogo}
+        //   />
+        // }
+        headerIcon={
+          <Ionicons name="notifications-outline" size={28} color="#333" />
         }
-        headerTitle="sierra"
-        headerTitleFontSize={50}
+        headerTitle="chapters"
+        headerTitleFontSize={30}
       >
         <View style={styles.categoryContainer}>
           {isSearchActive ? (
@@ -155,7 +159,7 @@ export default function Home() {
           )}
         </View>
 
-        <View style={{ flex: 1, height: 540, marginBottom: 20 }}>
+        <View style={{ flex: 1, height: 600, marginBottom: 20 }}>
           <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
             {filteredEvents.map((event) => (
               <EventList event={event} key={event.id} />
@@ -191,6 +195,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     // backgroundColor: "#f5f5f5",
     paddingHorizontal: 10,
+    marginTop: -50,
+    marginLeft: -20,
   },
   categoryScrollView: {
     flexDirection: "row",
@@ -214,22 +220,23 @@ const styles = StyleSheet.create({
   },
   categoryButton: {
     backgroundColor: "#333",
-    paddingVertical: 10,
+    paddingVertical: 7,
     paddingHorizontal: 13,
     borderRadius: 20,
     marginHorizontal: 4,
-    // height: 40,
+    // marginVertical: -4,
+    height: 30,
   },
   activeCategory: {
     backgroundColor: "#fff",
   },
   activeCategoryText: {
-    fontSize: 10,
+    fontSize: 12,
     color: "black",
     fontWeight: "bold",
   },
   categoryText: {
-    fontSize: 10,
+    fontSize: 12,
     color: "#fff",
   },
   searchIconContainer: {
@@ -241,8 +248,8 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 85,
     right: 20,
-    width: 50,
-    height: 50,
+    width: 60,
+    height: 60,
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
